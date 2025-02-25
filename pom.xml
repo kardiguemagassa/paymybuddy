@@ -28,6 +28,12 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+
+		<!--<sonar.host.url>http://localhost:9000</sonar.host.url>  L'URL de ton serveur SonarQube -->
+		<!--<sonar.projectKey>paymybuddy</sonar.projectKey>  Le nom de ton projet dans SonarQube -->
+		<!--<sonar.projectName>paymybuddy</sonar.projectName>  Nom de ton projet -->
+		<!--<sonar.projectVersion>1.0</sonar.projectVersion>  Version de ton projet -->
+		<!--<sonar.login>sqa_6e0394721bd9308cc323f67c16c39a046c362016</sonar.login> À recuperer depuis l'interface sonar -->
 	</properties>
 	<dependencies>
 		<!--<dependency>
@@ -49,11 +55,11 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
-		<!--<dependency>
+		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
-		</dependency>-->
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -91,6 +97,17 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<!--<version>3.9.1.2184</version>  Choisis la version la plus récente -->
+				<version>5.0.0.4389</version>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.9.1.2184</version>
 			</plugin>
 		</plugins>
 	</build>
