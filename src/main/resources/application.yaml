@@ -1,0 +1,11 @@
+spring:
+  application:
+    name:
+      paymybuddy
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
