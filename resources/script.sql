@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS `openclassrooms_paymybuddy`;
 USE `openclassrooms_paymybuddy`;
 
--- Table User (renommée en "users" pour éviter les conflits avec le mot réservé "User")
 CREATE TABLE users (
     `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(100) NOT NULL,
@@ -9,7 +8,6 @@ CREATE TABLE users (
     `password` VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- Table user_connections (relation N-N entre utilisateurs)
 CREATE TABLE user_connections (
     `user_id` INT NOT NULL,
     `connection_id` INT NOT NULL,
