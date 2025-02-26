@@ -36,10 +36,10 @@
 		<!--<sonar.login>sqa_6e0394721bd9308cc323f67c16c39a046c362016</sonar.login> À recuperer depuis l'interface sonar -->
 	</properties>
 	<dependencies>
-		<!--<dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>-->
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
