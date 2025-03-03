@@ -1,28 +1,55 @@
-CREATE DATABASE IF NOT EXISTS `openclassrooms_paymybuddy`;
+DROP DATABASE IF EXISTS `openclassrooms_paymybuddy`;
+CREATE DATABASE IF NOT EXISTS `openclassrooms_paymybuddy` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `openclassrooms_paymybuddy`;
 
-CREATE TABLE users (
-    `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+-- Table users
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE user
+(
+    `id`       BIGINT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(100) NOT NULL,
-    `email` VARCHAR(150) NOT NULL UNIQUE,
+    `email`    VARCHAR(150) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE TABLE user_connections (
-    `user_id` INT NOT NULL,
-    `connection_id` INT NOT NULL,
+-- Table connection
+DROP TABLE IF EXISTS `connection`;
+CREATE TABLE connection
+(
+    `user_id`       BIGINT NOT NULL,
+    `connection_id` BIGINT NOT NULL,
     PRIMARY KEY (`user_id`, `connection_id`),
-    FOREIGN KEY (`user_id`) REFERENCES users(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`connection_id`) REFERENCES users(`id`) ON DELETE CASCADE
+    UNIQUE (`user_id`, `connection_id`),
+    FOREIGN KEY (`user_id`) REFERENCES user (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`connection_id`) REFERENCES user (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Table transactions
-CREATE TABLE transactions (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `sender_id` INT NOT NULL,
-    `receiver_id` INT NOT NULL,
-    `description` VARCHAR(255),
-    `amount` DOUBLE NOT NULL,
-    FOREIGN KEY (`sender_id`) REFERENCES users(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`receiver_id`) REFERENCES users(`id`) ON DELETE CASCADE
+DROP TABLE IF EXISTS `transaction`;
+CREATE TABLE transaction
+(
+    `id`            BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `sender_id`     BIGINT NOT NULL,
+    `receiver_id`   BIGINT NOT NULL,
+    `description`   VARCHAR(255),
+    `amount`        DOUBLE NOT NULL,
+    `execution_date` TIMESTAMP,
+    `currency`        VARCHAR(5),
+    FOREIGN KEY (`sender_id`) REFERENCES user (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`receiver_id`) REFERENCES user (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- View historic
+CREATE VIEW historic AS
+SELECT
+    tr.id,
+    tr.sender_id,
+    sed.username AS sender_username,
+    tr.receiver_id,
+    rec.username AS receiver_username,
+    tr.amount,
+    tr.currency,
+    tr.execution_date
+FROM transaction tr
+         INNER JOIN user sed ON tr.sender_id = sed.id
+         INNER JOIN user rec ON tr.receiver_id = rec.id;
