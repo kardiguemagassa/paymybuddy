@@ -5,8 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Entity
-@Table(name = "transaction")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,16 +18,19 @@ public class Transaction {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id", referencedColumnName = "id")
-    private Long senderId;
+    @JoinColumn(name = "sender_id")
+    private User sender;
 
     @ManyToOne
-    @JoinColumn(name = "receiver_id", referencedColumnName = "id")
-    private long receiverId;
+    @JoinColumn(name = "receiver_id")
+    private User receiver;
 
-    @Column(name = "amount")
-    private double amount;
-
-    @Column(name = "description")
     private String description;
+
+    private double amount;
+    @Column(name = "execution_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date timestamp;
+
+    private String currency;
 }

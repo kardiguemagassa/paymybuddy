@@ -7,11 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "user_connection")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserConnection {
+public class Connection {
 
     @EmbeddedId
     private UserConnectionId userConnectionId;

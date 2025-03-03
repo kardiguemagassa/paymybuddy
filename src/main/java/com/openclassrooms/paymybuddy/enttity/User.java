@@ -1,6 +1,8 @@
 package com.openclassrooms.paymybuddy.enttity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,19 +14,20 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Users {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //@Column(name = "username")
+    @NotEmpty(message = "Username cannot be empty")
     private String username;
 
-    //@Column(name = "email")
+    @NotEmpty(message = "Email cannot be empty")
+    @Email(message = "Invalid email. Please enter a valid email address")
     private String email;
 
-    //@Column(name = "password")
+    @NotEmpty(message = "Password cannot be empty")
     private String password;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -33,6 +36,6 @@ public class Users {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "connection_id")
     )
-    private List<Users> connections;
+    private List<User> connections;
 
 }

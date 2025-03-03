@@ -3,9 +3,18 @@ spring:
     name:
       paymybuddy
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST:localhost}/openclassrooms_paymybuddy
+    username: ${DB_USER:openclassrooms}
+    password: ${DB_PASSWORD:openclassrooms}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-
+  jpa:
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        globally-quoted_identifiers: true
+        format_sql: true
+    open-in-view: false

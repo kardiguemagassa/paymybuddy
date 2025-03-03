@@ -1,32 +1,44 @@
 services:
-  mysql:
+  mysqldb:
+    container_name: mysqlcontainerforapp
     image: mysql:8
-    container_name: mysql_container
-    restart: always
+    restart: always #unless-stop
+    command: --default-authentication-plugin=mysql_native_password
+    #volume_driver:
+    ports:
+      - "3307:3306"  # Mappe le port 3307 de ton hôte vers le 3306 du conteneur
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "3307:3306"  # Mappe le port 3307 de ton hôte vers le 3306 du conteneur
-    volumes:
-      - mysql_data:/var/lib/mysql
+      SERVICE_TAGS: prod
+      SERVICE_NAME: mysqldb
+    networks:
+      - apinetwork
 
-  app:
+  #networks:
+    #apinetwork:
+      #driver: bridge
+
+  webapplication:
+    container_name: webapplicationcontainer
     build: .
-    container_name: springboot_app
-    restart: always
-    env_file:
-      - .env  # Charge les variables depuis le fichier .env
-    depends_on:
-      - mysql
+    image: webapplication:1
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    expose:
+      - 8080
+    env_file: -- .env  # Charge les variables depuis le fichier .env depends_on: -- mysql
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-    ports:
-      - "8081:8080" # Mappe le port 8080 de ton hôte vers le 8080 du conteneur
+      SERVICE_TAGS: prod
+      SERVICE_NAME: springweb
+      depends_on: -- mysqldb
+
 
   sonarqube:
     image: sonarqube:latest
