@@ -1,10 +1,9 @@
 package com.openclassrooms.paymybuddy.repository;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.enttity.Connection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UsersRepository extends JpaRepository<User, Long> {
-    User findByUsername(String username);
+public interface ConnectionRepository extends JpaRepository<Connection, Long> {
 }
