@@ -8,8 +8,7 @@ public class HelloController {
 
     //https://fr.iban.com/currency-codes
     //https://www.baeldung.com/jpa-composite-primary-keys
-
-    @GetMapping
+    @GetMapping()
     public String home() {
         return "index";
     }
