@@ -7,9 +7,10 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE user
 (
     `id`       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(100) NOT NULL,
-    `email`    VARCHAR(150) NOT NULL UNIQUE,
-    `password` VARCHAR(255) NOT NULL
+    `username` VARCHAR(100) DEFAULT NULL,
+    `email`    VARCHAR(150) DEFAULT NULL UNIQUE,
+    `password` VARCHAR(255) DEFAULT NULL,
+    `balance` DOUBLE DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Table connection
@@ -29,12 +30,12 @@ DROP TABLE IF EXISTS `transaction`;
 CREATE TABLE transaction
 (
     `id`            BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `sender_id`     BIGINT NOT NULL,
-    `receiver_id`   BIGINT NOT NULL,
-    `description`   VARCHAR(255),
-    `amount`        DOUBLE NOT NULL,
+    `sender_id`     BIGINT DEFAULT NULL,
+    `receiver_id`   BIGINT DEFAULT NULL,
+    `description`   VARCHAR(255) DEFAULT NULL,
+    `amount`        DOUBLE DEFAULT NULL,
     `execution_date` TIMESTAMP,
-    `currency`        VARCHAR(5),
+    `currency`        VARCHAR(5) DEFAULT NULL,
     FOREIGN KEY (`sender_id`) REFERENCES user (`id`) ON DELETE CASCADE,
     FOREIGN KEY (`receiver_id`) REFERENCES user (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

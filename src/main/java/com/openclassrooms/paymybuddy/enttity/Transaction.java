@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -28,9 +28,19 @@ public class Transaction {
     private String description;
 
     private double amount;
+
     @Column(name = "execution_date")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date timestamp;
+    private LocalDateTime executionDate;
 
     private String currency;
+
+    public Transaction(User sender, User receiver, String description, double amount, LocalDateTime localDateTime, String currency) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.description = description;
+        this.amount = amount;
+        this.executionDate = localDateTime;
+        this.currency = currency;
+    }
 }

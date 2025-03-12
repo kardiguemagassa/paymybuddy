@@ -1,16 +1,17 @@
 package com.openclassrooms.paymybuddy.enttity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
-//@Table(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,6 +31,9 @@ public class User {
     @NotEmpty(message = "Password cannot be empty")
     private String password;
 
+    private double balance;
+
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_connections",
@@ -38,4 +42,10 @@ public class User {
     )
     private List<User> connections;
 
+    public User(String username, String email, String password, List<User> connections) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.connections = connections;
+    }
 }

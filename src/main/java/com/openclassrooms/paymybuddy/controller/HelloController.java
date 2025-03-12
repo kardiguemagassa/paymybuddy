@@ -1,13 +1,16 @@
 package com.openclassrooms.paymybuddy.controller;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@Controller
 public class HelloController {
 
-    @GetMapping("/")
-    public String sayHello() {
-        return "Hello World!";
+    //https://fr.iban.com/currency-codes
+    //https://www.baeldung.com/jpa-composite-primary-keys
+
+    @GetMapping
+    public String home() {
+        return "index";
     }
 }
