@@ -21,14 +21,13 @@ public class WebSecurityConfig {
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     private final String[] publicUrl = {"/",
-            "/global-search/**",
+            "/index/**",
             "/register",
             "/register/**",
             "/webjars/**",
             "/resources/**",
             "/assets/**",
             "/css/**",
-            "/summernote/**",
             "/js/**",
             "/*.css",
             "/*.js",

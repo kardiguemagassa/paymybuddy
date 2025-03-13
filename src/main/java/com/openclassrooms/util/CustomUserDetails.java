@@ -1,6 +1,5 @@
 package com.openclassrooms.util;
 
-import com.openclassrooms.paymybuddy.enttity.Connection;
 import com.openclassrooms.paymybuddy.enttity.User;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,9 +22,8 @@ public class CustomUserDetails implements UserDetails {
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority())
-        return List.of();
+        return List.of();*/
 
-         */
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         return authorities;

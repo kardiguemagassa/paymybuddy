@@ -14,11 +14,17 @@ import java.io.IOException;
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws IOException, ServletException {
+
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
+
         System.out.println("Username " + username + " is logged in.");
-        boolean userAuthenticated = authentication.getAuthorities().stream().anyMatch(r->r.getAuthority().equals("User"));
+
+        boolean userAuthenticated = authentication.getAuthorities().stream()
+                .anyMatch(r->r.getAuthority().equals("User"));
+
         if (userAuthenticated) {
             response.sendRedirect("/register/");
         }

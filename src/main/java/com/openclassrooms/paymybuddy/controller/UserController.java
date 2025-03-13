@@ -34,14 +34,15 @@ public class UserController {
     @PostMapping("/register")
     public String userRegistration(@Valid User user, Model model) {
 
-        Optional<User> userOptional = userService.findByEmail(user.getEmail());
+        Optional<User> userOptional = userService.findUserByEmail(user.getEmail());
 
         if (userOptional.isPresent()) {
-            model.addAttribute("error", "E-mail déjà enregistré, essayez de vous connecter ou s'inscrire avec un autre e-mail.");
+            model.addAttribute("error", "E-mail déjà enregistré, " +
+                    "essayez de vous connecter ou s'inscrire avec un autre e-mail.");
             model.addAttribute("user", new User());
             return "register";
         }
-        userService.register(user);
+        userService.registerUser(user);
         return "index";
     }
 
@@ -59,13 +60,5 @@ public class UserController {
         }
         return "redirect:/";
     }
-
-
-//
-//    @PostMapping("/add-friend")
-//    public ResponseEntity<User> addFriend(@RequestParam String userEmail, @RequestParam String friendEmail) {
-//        userService.addFriend(userEmail, friendEmail);
-//        return ResponseEntity.ok().build();
-//    }
 
 }

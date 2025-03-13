@@ -1,5 +1,6 @@
 package com.openclassrooms.paymybuddy.controller;
 
+import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -17,7 +18,7 @@ public class ProfileController {
 
     @GetMapping("/profile")
     public String profile(Model model) {
-        Object currentUserProfile = userService.getCurrentUserProfile();
+        User currentUserProfile = userService.getCurrentUserProfile();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (!(authentication instanceof AnonymousAuthenticationToken)) {

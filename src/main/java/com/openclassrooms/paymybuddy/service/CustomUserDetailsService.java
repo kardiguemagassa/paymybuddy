@@ -22,6 +22,5 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("L'utilisateur n'est pas disponible" + username));
 
         return new CustomUserDetails(user);
-
     }
 }

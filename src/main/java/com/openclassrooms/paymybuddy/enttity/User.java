@@ -42,10 +42,4 @@ public class User {
     )
     private List<User> connections;
 
-    public User(String username, String email, String password, List<User> connections) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.connections = connections;
-    }
 }
