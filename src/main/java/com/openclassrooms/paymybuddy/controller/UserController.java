@@ -43,7 +43,7 @@ public class UserController {
             return "register";
         }
         userService.registerUser(user);
-        return "index";
+        return "login";
     }
 
     @GetMapping("/login")

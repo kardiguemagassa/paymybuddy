@@ -26,7 +26,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 .anyMatch(r->r.getAuthority().equals("User"));
 
         if (userAuthenticated) {
-            response.sendRedirect("/register/");
+            response.sendRedirect("/profile/");
         }
     }
 }

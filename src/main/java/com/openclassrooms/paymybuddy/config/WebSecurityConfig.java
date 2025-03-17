@@ -21,18 +21,7 @@ public class WebSecurityConfig {
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     private final String[] publicUrl = {"/",
-            "/index/**",
-            "/register",
-            "/register/**",
-            "/webjars/**",
-            "/resources/**",
-            "/assets/**",
-            "/css/**",
-            "/js/**",
-            "/*.css",
-            "/*.js",
-            "/*.js.map",
-            "/fonts**", "/favicon.ico", "/resources/**", "/error"};
+            "/index/**", "/css/**", "/register/**", "/webjars/**", "/resources/**", "/assets/**","/js/**","/error"};
 
     @Bean
     protected SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
@@ -45,13 +34,12 @@ public class WebSecurityConfig {
         });
 
         http.formLogin(form->form.loginPage("/login").permitAll()
-                .successHandler(customAuthenticationSuccessHandler).defaultSuccessUrl("/profile", true))
+                        .successHandler(customAuthenticationSuccessHandler).defaultSuccessUrl("/profile", true))
 
                 .logout(logout ->{
                     logout.logoutUrl("/logout");
                     logout.logoutSuccessUrl("/");
                 }).cors(Customizer.withDefaults())
-                //.csrf(csrf->csrf.disable());
                 .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();

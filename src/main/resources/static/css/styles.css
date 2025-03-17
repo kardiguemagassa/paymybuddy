@@ -172,6 +172,93 @@ a.color-text, a.color-text:hover {color: rgba(251, 139, 20, 0.82);}
 
 span.title-span {font-size: 14px;font-weight: 400;}
 
+.myForm-profile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    margin: 150px auto;
+    padding: 30px;
+}
+@media (max-width: 468px) {
+    .myForm-profile {
+        width: 70%;
+        margin: 100px auto;
+    }
+}
+.myForm-profile form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.myForm-profile form .row,
+.myForm-profile form .col-md-12,
+.myForm-profile form .form-profile-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.myForm-profile form input {
+    padding: 15px;
+    margin: 10px 0;
+    width: 100%;
+    border: 1px solid #002244;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: all 0.3s ease-in-out;
+    box-sizing: border-box;
+}
+
+.myForm-transfer {
+    display: block;
+    width: 50%;
+    padding: .375rem .75rem;
+    margin: 100px auto;
+    font-size: 1rem;
+}
+.form-inline-transfer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.form-control-transfer {
+    flex: 1px;
+    min-width: 0;
+    height: 87px;
+    padding: 30px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+select.form-control-transfer {
+    appearance: none;
+    background-color: white;
+    cursor: pointer;
+}
+.form-control-transfer option {
+    padding: 220px;
+}
+.myBtn-pay{
+    background: rgba(251, 139, 20, 0.82);
+    margin-top: 0 !important;
+    width: 70px;
+    height: 87px;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    color: white;
+}
+
+.table {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+
+    margin-top: 150px;
+}
+
+
+
+
 
 
 

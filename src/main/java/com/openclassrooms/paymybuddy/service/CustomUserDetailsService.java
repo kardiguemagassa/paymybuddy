@@ -2,7 +2,6 @@ package com.openclassrooms.paymybuddy.service;
 
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.repository.UserRepository;
-import com.openclassrooms.util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,10 +16,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername (String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("L'utilisateur n'est pas disponible" + username));
+    public UserDetails loadUserByUsername (String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User is connected with e-mail " + email));
 
-        return new CustomUserDetails(user);
+        return user;
     }
 }

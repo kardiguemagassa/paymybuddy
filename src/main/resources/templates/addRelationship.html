@@ -75,7 +75,32 @@
 
     <!-- menu lateral-->
     <div class="sidenav px-5"></div>
-    <h1>Ajouter une relation</h1>
+
+    <div class="myForm-profile">
+        <form th:action="@{/register}" th:object="${user}" method="post">
+            <div class="box-profile">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-profile-group">
+                            <label>Chercher une ralion</label>
+<!--                            <input class="form-control-profile" placeholder="Email" name="email" th:field="*{email}"-->
+                            <input class="form-control-profile" placeholder="Saisir une addresse e-mail" name="email"
+                                   type="email"
+                                   required/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="box-footer">
+                <div class="row">
+                    <div class="form-group mt-5 col-md-12">
+                        <button type="submit" class="myBtn py-3">Ajouter</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 
 </section>
 
