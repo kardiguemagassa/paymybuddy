@@ -16,10 +16,10 @@ import java.util.Objects;
 public class UserConnectionId implements Serializable {
 
     @Column(name = "user_id")
-    private int userId;
+    private Long userId;
 
     @Column(name = "connection_id")
-    private int connectionId;
+    private Long connectionId;
 
     @Override
     public boolean equals(Object o) {

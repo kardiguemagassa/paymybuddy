@@ -10,6 +10,8 @@ CREATE TABLE user
     `username` VARCHAR(100) DEFAULT NULL,
     `email`    VARCHAR(150) DEFAULT NULL UNIQUE,
     `password` VARCHAR(255) DEFAULT NULL,
+    `profileImageUrl` VARCHAR(255) DEFAULT NULL,
+
     `balance` DOUBLE DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

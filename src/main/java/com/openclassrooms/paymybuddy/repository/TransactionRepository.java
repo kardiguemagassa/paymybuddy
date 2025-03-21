@@ -12,7 +12,8 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     //@Query(value = "select t from Transaction t where t.sender=:sender", nativeQuery = true)
-    List<Transaction> findBySender(User sender);
+    List<Transaction> findBySenderEmail(String senderEmail);
+
 
 
 }

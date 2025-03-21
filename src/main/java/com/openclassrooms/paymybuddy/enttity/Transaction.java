@@ -30,17 +30,7 @@ public class Transaction {
     private double amount;
 
     @Column(name = "execution_date")
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime executionDate;
 
     private String currency;
-
-    public Transaction(User sender, User receiver, String description, double amount, LocalDateTime localDateTime, String currency) {
-        this.sender = sender;
-        this.receiver = receiver;
-        this.description = description;
-        this.amount = amount;
-        this.executionDate = localDateTime;
-        this.currency = currency;
-    }
 }

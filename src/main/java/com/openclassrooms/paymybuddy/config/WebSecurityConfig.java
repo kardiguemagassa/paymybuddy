@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import static com.openclassrooms.paymybuddy.constant.SecurityConstant.*;
 
 @Configuration
 @AllArgsConstructor
@@ -20,16 +21,13 @@ public class WebSecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
-    private final String[] publicUrl = {"/",
-            "/index/**", "/css/**", "/register/**", "/webjars/**", "/resources/**", "/assets/**","/js/**","/error"};
-
     @Bean
     protected SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
 
         http.authenticationProvider(authenticationProvider());
 
         http.authorizeHttpRequests(authorizeRequests ->{
-            authorizeRequests.requestMatchers(publicUrl).permitAll();
+            authorizeRequests.requestMatchers(PUBLIC_URLS).permitAll();
             authorizeRequests.anyRequest().authenticated();
         });
 

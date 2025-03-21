@@ -22,7 +22,7 @@
 <header class="navbar navbar-expand-lg navbar-dark">
 
     <label class="mt-2 ms-5 font-weight-bold h5">
-        <a th:href="@{/profile/}">paymybuddy</a><span class="logo_com font-weight-bold h5" style="color: white">.com</span>
+        <a th:href="@{/transaction/}">Pay My Buddy</a><span class="logo_com font-weight-bold h5" style="color: white">.com</span>
     </label>
     <button
             class="navbar-toggler"
@@ -40,31 +40,31 @@
         <ul class="navbar-nav m-auto mt-2 mt-lg-0">
 
             <li class="nav-item ">
-                <!--                <a sec:authorize="hasAuthority('User')" class="nav-link" th:href="@{/transaction/}">-->
-                <a class="nav-link" th:href="@{transaction}"><i class="fa-solid fa-eye"></i>Transférer</a>
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
+                    <i class="fa-solid fa-eye"></i>Transférer</a>
             </li>
             <li class="nav-item ">
-                <!--                <a sec:authorize="hasAuthority('User')" class="nav-link" th:href="@{/profile/}">-->
-                <a class="nav-link" th:href="@{profile}"><i class="fa-duotone fa-solid fa-user"></i> Profil</a>
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{profile}">
+                    <i class="fa-duotone fa-solid fa-user"></i> Profil</a>
             </li>
 
             <li class="nav-item ">
-                <!--                <a sec:authorize="hasAuthority('User')" class="nav-link" th:href="@{/profile/add}">-->
-                <a class="nav-link" th:href="@{addRelationship}"><i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addRelationship}">
+                    <i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
             </li>
 
         </ul>
 
-        <!-- image profile-->
-        <!--        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.photosImagePath!=null}" th:src="@{${user?.photosImagePath}}"/>-->
+<!--        image profile-->
+<!--        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.username!=null}" th:src="@{${user?.getProfileImageUrl()}}"/>-->
 
-        <!--        <label th:if="${user.firstName != null && user.lastName != null}" -->
-        <!--               th:text="${user.firstName+' '+user.lastName}"-->
-        <!--               class="nav-item nav-link px-2 me-3">-->
-        <!--        </label>-->
+<!--        <label th:if="${user.username != null && user.email != null}"-->
+<!--               th:text="${user.username+' '+user.email}"-->
+<!--               class="nav-item nav-link px-2 me-3">-->
+<!--        </label>-->
 
-        <!--        <label th:unless="${user.firstName != null && user.lastName != null}" th:text="${username}"-->
-        <!--               class="nav-item nav-link px-2 me-3"></label>-->
+<!--        <label th:unless="${user.username != null && user.email != null}" th:text="${username}"-->
+<!--               class="nav-item nav-link px-2 me-3"></label>-->
 
         <button class="myBtn-light me-5" onclick="window.location.href='/logout'">Se déconnecter</button>
     </div>
@@ -76,26 +76,34 @@
     <div class="sidenav px-5"></div>
 
     <div class="myForm-transfer">
-        <form th:action="@{/register}" th:object="${user}" method="post">
+        <form th:action="@{/transaction/send}" method="post">
             <div class="box-transfer">
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-inline-transfer">
 
-                            <select class="form-control-transfer" name="type" id="type">
+                            <input type="email" class="form-control-transfer" name="senderEmail" placeholder="Votre Email" required/>
+
+                            <select class="form-control-transfer" name="receiverEmail" required>
                                 <option value="">Sélectionner une relation</option>
-                                <option value="John">John</option>
-                                <option value="Fred">Fred</option>
-                                <option value="Laure">Laure</option>
-                                <option value="Ludo">Ludo</option>
-                                <option value="Michel">Michel</option>
+                                <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.username}"></option>
                             </select>
 
                             <input class="form-control-transfer" placeholder="Description" name="description" type="text" required/>
 
-                            <input class="form-control-transfer" placeholder="0€" name="amount" type="number" required/>
+                            <!-- À REVOIR DEMAIN ------>
+                            <input id="amount" class="form-control-transfer" placeholder="0€" name="amount" type="number" required />
+
+<!--                            <select id="currency" class="form-control-transfer" name="currency" required>-->
+<!--                                <option value="XOF">Franc CFA (XOF)</option>-->
+<!--                                <option value="USD">Dollar Américain ($)</option>-->
+<!--                                <option value="JPY">Yen Japonais (¥)</option>-->
+<!--                                <option value="CNY">Yuan Chinois (¥)</option>-->
+<!--                                <option value="EUR" selected>Euro (€)</option>-->
+<!--                            </select>-->
 
                             <button type="submit" class="myBtn-pay py-3">Payer</button>
+
                         </div>
                     </div>
                 </div>
@@ -111,20 +119,10 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>Laure-Anne</td>
-                <td>Restaurant</td>
-                <td>10€</td>
-            </tr>
-            <tr>
-                <td>Clara</td>
-                <td>Voyage</td>
-                <td>25€</td>
-            </tr>
-            <tr>
-                <td>Luc</td>
-                <td>Billets de cinéma</td>
-                <td>8€</td>
+            <tr th:each="transaction : ${transactions}">
+                <td th:text="${transaction.receiver.email}"></td>
+                <td th:text="${transaction.description}"></td>
+                <td th:text="${transaction.amount + ' €'}"></td>
             </tr>
             </tbody>
         </table>
@@ -133,6 +131,7 @@
 
 </section>
 
+<script type="text/javascript" th:src="@{/js/main.js}"></script>
 <script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
 <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 
