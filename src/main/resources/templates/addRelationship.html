@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Ajouter relation</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/styles.css}"/>
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css} "/>
+    <link th:rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.css}"/>
+
+</head>
+
+<body>
+
+<header class="navbar navbar-expand-lg navbar-dark">
+
+    <label class="mt-2 ms-5 font-weight-bold h5">
+        <a th:href="@{/profile/}">Pay My Buddy</a><span class="logo_com font-weight-bold h5" style="color: white">.com</span>
+    </label>
+    <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarTogglerDemo02"
+            aria-controls="navbarTogglerDemo02"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+    >
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarToggler">
+        <ul class="navbar-nav m-auto mt-2 mt-lg-0">
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
+                    <i class="fa-solid fa-eye"></i>Transférer</a>
+            </li>
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{profile}">
+                    <i class="fa-duotone fa-solid fa-user"></i> Profil</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addRelationship}">
+                    <i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
+            </li>
+
+        </ul>
+
+<!--        image profile-->
+<!--        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.username!=null}" th:src="@{${user?.getProfileImageUrl()}}"/>-->
+
+<!--        <label th:if="${user.username != null && user.email != null}"-->
+<!--               th:text="${user.username+' '+user.email}"-->
+<!--               class="nav-item nav-link px-2 me-3">-->
+<!--        </label>-->
+
+<!--        <label th:unless="${user.username != null && user.email != null}" th:text="${username}"-->
+<!--               class="nav-item nav-link px-2 me-3"></label>-->
+
+
+        <button class="myBtn-light me-5" onclick="window.location.href='/logout'">Se déconnecter</button>
+    </div>
+</header>
+
+<section class="section">
+
+    <!-- menu lateral-->
+    <div class="sidenav px-5"></div>
+
+    <div class="myForm-add">
+
+        <form th:action="@{/addRelationship/addRelation}" method="post">
+            <div class="box-profile">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div th:if="${successMessage}" class="alert alert-success" role="alert">
+                                <p th:text="${successMessage}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+                                <p th:text="${errorMessage}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-profile-group">
+                            <label>Chercher une ralion</label>
+                            <input class="form-control-profile" placeholder="Saisir une addresse e-mail" name="email"
+                                   type="email"
+                                   required/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="box-footer">
+                <div class="row">
+                    <div class="form-group mt-3 col-md-12">
+                        <button type="submit" class="myBtn py-3">Ajouter</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <table class="table-add">
+            <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="relation : ${relations}">
+                <td th:text="${relation.username}"></td>
+                <td th:text="${relation.email}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</section>
+
+<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+
+</body>
+</html>

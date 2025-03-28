@@ -1,0 +1,76 @@
+services:
+  mysqldb:
+    container_name: mysqlcontainerforapp
+    image: mysql:8
+    restart: always #unless-stop
+    command: --default-authentication-plugin=mysql_native_password
+    #volume_driver:
+    ports:
+      - "3307:3306"  # Mappe le port 3307 de ton hôte vers le 3306 du conteneur
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SERVICE_TAGS: prod
+      SERVICE_NAME: mysqldb
+    networks:
+      - apinetwork
+
+  #networks:
+    #apinetwork:
+      #driver: bridge
+
+  webapplication:
+    container_name: webapplicationcontainer
+    build: .
+    image: webapplication:1
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    expose:
+      - 8080
+    env_file: -- .env  # Charge les variables depuis le fichier .env depends_on: -- mysql
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SERVICE_TAGS: prod
+      SERVICE_NAME: springweb
+      depends_on: -- mysqldb
+
+
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    restart: always
+    ports:
+      - "9000:9000"  # Port accessible via http://localhost:9000
+    environment:
+      - SONARQUBE_JDBC_URL=${SONARQUBE_JDBC_URL}  # Connexion à la base de données MySQL de SonarQube
+      - SONARQUBE_JDBC_USERNAME=${SONARQUBE_JDBC_USERNAME}
+      - SONARQUBE_JDBC_PASSWORD=${SONARQUBE_JDBC_PASSWORD}
+      - SONAR_TOKEN=${SONAR_TOKEN}
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: always
+    ports:
+      - "8080:8080"  # Jenkins UI accessible via http://localhost:8080
+    environment:
+      - JENKINS_USER=${JENKINS_USER}
+      - JENKINS_PASSWORD=${JENKINS_PASSWORD}
+    volumes:
+      - jenkins_data:/var/jenkins_home
+
+volumes:
+  mysql_data:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:
+  jenkins_data:

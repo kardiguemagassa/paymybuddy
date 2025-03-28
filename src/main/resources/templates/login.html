@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css} "/>
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/font-awesome.min.css}"/>
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/styles.css}"/>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet"/>
+    <title>Connexion</title>
+</head>
+<body>
+
+<div class="row" style="margin-right:0">
+    <div class="col-md-6">
+        <div class="coffee_mug_background">
+            <div class="logo_left mt-3 pt-4 ms-5 pl-5">
+                <h2 class="logo">Pay My Buddy <span class="logo_com">.com</span></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="myForm" style="align-items:center">
+
+            <form th:action="@{/login}" th:object="${user}" method="post">
+
+                <h1 class="text-center bold font-weight-bold mb-4">Connexion</h1>
+
+                <div class="form-group">
+                    <input placeholder="Email" name="username" field="{email}" type="email" class="form-control" required />
+                </div>
+
+                <div class="form-group">
+                    <input placeholder="Password" name="password" field="{password}" type="password" class="form-control" required />
+                </div>
+
+                <div class="clearfix mb-4">
+                    <label class="float-left form-check-label"><input type="checkbox" /> Mot de passe oublié?</label>
+                    <a href="#" class="color-text float-right">Cliquez ici</a>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="myBtn">Se connecter</button>
+                </div>
+
+                <p class="text-center">
+                    Etes-vous un nouvel utilisateur?
+                    <a class="color-text" href="#" th:href="@{/register}">Inscrivez-vous maintenant</a>
+                </p>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+<!--<script type="text/javascript" th:src="@{/js/main.js}"></script>-->
+</html>
