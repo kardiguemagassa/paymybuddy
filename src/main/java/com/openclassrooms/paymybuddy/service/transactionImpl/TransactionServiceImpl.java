@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service;
+package com.openclassrooms.paymybuddy.service.transactionImpl;
 
 import com.openclassrooms.paymybuddy.enttity.Transaction;
 import com.openclassrooms.paymybuddy.enttity.User;
@@ -7,29 +7,60 @@ import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
 import com.openclassrooms.paymybuddy.repository.TransactionRepository;
 
 import com.openclassrooms.paymybuddy.repository.UserRepository;
+import com.openclassrooms.paymybuddy.service.TransactionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TransactionService {
+public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final UserService userService;
-    private static final double FEE_PERCENTAGE = 0.005; // 0.5%
+    private final UserRepository userRepository;
+    private static final double FEE_PERCENTAGE = 0.005;
 
     @Transactional
+    @Override
+    public List<Transaction> getUserTransactions(String email) {
+        return transactionRepository.findAllByUserEmail(email);
+    }
+
+    @Transactional
+    @Override
+    public User getUserWithConnections(String email) throws UserNotFoundException {
+        return userRepository.findWithConnectionsByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé"));
+    }
+
+    @Transactional
+    @Override
+    public User getUserByTransactionEmail(String email) throws UserNotFoundException {
+        return userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé avec l'email: " + email));
+    }
+
+    public User addBalance(String email, double amount) throws UserNotFoundException {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être positif");
+        }
+
+        User user = getUserByTransactionEmail(email);
+
+
+        user.setBalance(user.getBalance() + amount);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    @Override
     public Transaction makeTransaction(String senderEmail, String receiverEmail,
                                        double amount, String description) throws UserNotFoundException, InsufficientBalanceException {
 
-        User sender = userService.getUserByEmail(senderEmail);
-        User receiver = userService.getUserByEmail(receiverEmail);
+        User sender = getUserByTransactionEmail(senderEmail);
+        User receiver = getUserByTransactionEmail(receiverEmail);
 
         // Validation
         validateTransaction(sender, receiver, amount);
@@ -49,24 +80,19 @@ public class TransactionService {
 
     private void validateTransaction(User sender, User receiver, double amount) throws InsufficientBalanceException {
         if (sender == null || receiver == null) {
-            throw new IllegalArgumentException("Sender or receiver cannot be null");
+            throw new IllegalArgumentException("Le destinataire ne peut pas être nul");
         }
         if (sender.equals(receiver)) {
-            throw new IllegalArgumentException("Cannot send money to yourself");
+            throw new IllegalArgumentException("Impossible de vous envoyer de l'argent");
         }
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be positive");
+            throw new IllegalArgumentException("Le montant doit être positif");
         }
         if (!sender.getConnections().contains(receiver)) {
-            throw new IllegalStateException("You can only send money to your connections");
+            throw new IllegalStateException("Vous ne pouvez envoyer de l'argent qu'à vos relations");
         }
         if (sender.getBalance() < (amount * (1 + FEE_PERCENTAGE))) {
-            throw new InsufficientBalanceException("Insufficient balance including fee");
+            throw new InsufficientBalanceException("Solde insuffisant, frais compris");
         }
-    }
-
-    @Transactional
-    public List<Transaction> getUserTransactions(String email) {
-        return transactionRepository.findAllByUserEmail(email);
     }
 }

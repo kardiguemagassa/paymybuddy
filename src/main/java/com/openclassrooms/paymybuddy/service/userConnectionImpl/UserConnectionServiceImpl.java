@@ -1,25 +1,36 @@
-package com.openclassrooms.paymybuddy.service;
+package com.openclassrooms.paymybuddy.service.userConnectionImpl;
 
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
 import com.openclassrooms.paymybuddy.repository.UserRepository;
+import com.openclassrooms.paymybuddy.service.UserConnectionService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
 @AllArgsConstructor
 @Transactional
-public class ConnectionService {
+public class UserConnectionServiceImpl implements UserConnectionService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final UserRepository userRepository;
 
+    @Override
+    public Set<User> getUserConnections(String userEmail) {
+        User user = userRepository.findUserByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + userEmail));
+
+        return userRepository.findRelationsByEmail(userEmail);
+    }
+
     @Transactional
+    @Override
     public boolean addConnection(String currentUserEmail, String targetEmail) {
         User currentUser = userRepository.findUserByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
@@ -33,7 +44,7 @@ public class ConnectionService {
             return false;
         }
 
-        // Ajoute la connexion bidirectionnelle
+        // Ajout connexion bidirectionnelle
         currentUser.addConnection(targetUser);
         userRepository.save(currentUser);
 
@@ -41,15 +52,17 @@ public class ConnectionService {
         return true;
     }
 
-    public Set<User> getUserConnections(String userEmail) {
-        User user = userRepository.findUserByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + userEmail));
+    @Override
+    public Set<User> getPotentialConnections(String userEmail) throws UserNotFoundException {
+        User currentUser = userRepository.findUserByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
-        // Utilise la méthode du repository optimisée
-        return userRepository.findRelationsByEmail(userEmail);
+        return new HashSet<>(userRepository.findPotentialConnections(userEmail, currentUser.getId()));
     }
 
-    public boolean updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail) throws UserNotFoundException {
+    @Override
+    public boolean updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
+            throws UserNotFoundException {
         User currentUser = userRepository.findUserByEmail(currentUserEmail)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
@@ -75,6 +88,7 @@ public class ConnectionService {
     }
 
     @Transactional
+    @Override
     public boolean removeConnection(String currentUserEmail, String targetEmail) {
         User currentUser = userRepository.findUserByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
@@ -93,4 +107,5 @@ public class ConnectionService {
         LOGGER.info("Relation supprimée: {} -/-> {}", currentUserEmail, targetEmail);
         return true;
     }
+
 }
