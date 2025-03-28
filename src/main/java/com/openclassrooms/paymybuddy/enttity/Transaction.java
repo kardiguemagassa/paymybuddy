@@ -1,14 +1,15 @@
 package com.openclassrooms.paymybuddy.enttity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
+//@ToString(exclude = {"sender", "receiver"})
+//@EqualsAndHashCode(exclude = {"sender", "receiver"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Transaction {
@@ -17,20 +18,32 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
+    @JsonIgnore
     private User sender;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receiver_id")
+    @JsonIgnore
     private User receiver;
 
     private String description;
-
     private double amount;
+    private double fee;
 
-    @Column(name = "execution_date")
-    private LocalDateTime executionDate;
+    @Column(name = "execution_date", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    private String currency;
+    private String currency = "EUR";
+
+    public static Transaction create(User sender, User receiver, double amount, String description, double feePercentage) {
+        Transaction transaction = new Transaction();
+        transaction.setSender(sender);
+        transaction.setReceiver(receiver);
+        transaction.setAmount(amount);
+        transaction.setFee(amount * feePercentage);
+        transaction.setDescription(description);
+        return transaction;
+    }
 }

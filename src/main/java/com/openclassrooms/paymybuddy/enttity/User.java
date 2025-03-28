@@ -2,24 +2,16 @@ package com.openclassrooms.paymybuddy.enttity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -28,34 +20,74 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotEmpty(message = "Username cannot be empty")
-    private String username;
+    private String name;
 
-    @NotEmpty(message = "Email cannot be empty")
-    @Email(message = "Invalid email. Please enter a valid email address")
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @NotEmpty(message = "Password cannot be empty")
     private String password;
-
     private String profileImageUrl;
-
     private double balance;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Connection> connections = new ArrayList<>();
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "connection",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "connection_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    columnNames = {"user_id", "connection_id"}
+            )
+    )
+    private Set<User> connections = new HashSet<>();
+
+    // bidirectionnelle
+    @JsonIgnore
+    @ManyToMany(mappedBy = "connections", fetch = FetchType.LAZY)
+    private Set<User> connectedBy = new HashSet<>();
+
+    // Transactions
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Transaction> sentTransactions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Transaction> receivedTransactions = new ArrayList<>();
 
 
-//    @JsonIgnore
-//    @ManyToMany(fetch = FetchType.LAZY)
-//    @JoinTable(
-//            name = "user_connections",
-//            joinColumns = @JoinColumn(name = "user_id"),
-//            inverseJoinColumns = @JoinColumn(name = "connection_id")
-//    )
-//    private List<User> connections;
+    //transaction
+    public void addSentTransaction(Transaction transaction) {
+        this.sentTransactions.add(transaction);
+        transaction.setSender(this);
+    }
+
+    public void addReceivedTransaction(Transaction transaction) {
+        this.receivedTransactions.add(transaction);
+        transaction.setReceiver(this);
+    }
 
 
+    //connection
+    public void addConnection(User contact) {
+        if (contact == null || this.equals(contact)) {
+            throw new IllegalArgumentException("Invalid friend connection");
+        }
+        this.connections.add(contact);
+        contact.getConnectedBy().add(this);
+    }
+
+    public void removeConnection(User contact) {
+        this.connections.remove(contact);
+        contact.getConnectedBy().remove(this);
+    }
+
+    @Override
+    public String toString() {
+        return "User{name='" + name + "', email='" + email + "'}";
+    }
+
+    // UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
