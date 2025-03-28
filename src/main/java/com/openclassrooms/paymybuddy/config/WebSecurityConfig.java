@@ -7,14 +7,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
 import static com.openclassrooms.paymybuddy.constant.SecurityConstant.*;
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 @AllArgsConstructor
 public class WebSecurityConfig {
 
@@ -22,34 +27,48 @@ public class WebSecurityConfig {
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     @Bean
-    protected SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authenticationProvider(authenticationProvider())
 
-        http.authenticationProvider(authenticationProvider());
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(
+                                "/transactions/**",
+                                "/profile/**",
+                                "/addRelationship/**"
+                        ).authenticated()
+                        .anyRequest().authenticated()
+                )
 
-        http.authorizeHttpRequests(authorizeRequests ->{
-            authorizeRequests.requestMatchers(PUBLIC_URLS).permitAll();
-            authorizeRequests.anyRequest().authenticated();
-        });
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .defaultSuccessUrl("/profile", true)
+                )
 
-        http.formLogin(form->form.loginPage("/login").permitAll()
-                        .successHandler(customAuthenticationSuccessHandler).defaultSuccessUrl("/profile", true))
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                )
 
-                .logout(logout ->{
-                    logout.logoutUrl("/logout");
-                    logout.logoutSuccessUrl("/");
-                }).cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .cors(Customizer.withDefaults());
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider () {
-
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        authenticationProvider.setUserDetailsService(customUserDetailsService);
-        return authenticationProvider;
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
     @Bean

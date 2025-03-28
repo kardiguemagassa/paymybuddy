@@ -49,7 +49,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         User user = getUserByTransactionEmail(email);
 
-
         user.setBalance(user.getBalance() + amount);
         return userRepository.save(user);
     }
