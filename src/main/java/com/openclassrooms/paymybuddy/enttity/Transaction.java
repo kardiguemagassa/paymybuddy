@@ -8,8 +8,6 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-//@ToString(exclude = {"sender", "receiver"})
-//@EqualsAndHashCode(exclude = {"sender", "receiver"})
 @NoArgsConstructor
 @AllArgsConstructor
 public class Transaction {
@@ -31,11 +29,10 @@ public class Transaction {
     private String description;
     private double amount;
     private double fee;
+    private String currency = "EUR";
 
     @Column(name = "execution_date", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    private String currency = "EUR";
 
     public static Transaction create(User sender, User receiver, double amount, String description, double feePercentage) {
         Transaction transaction = new Transaction();

@@ -7,11 +7,10 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE user
 (
     `id`       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(100) DEFAULT NULL,
+    `profile_name` VARCHAR(100) DEFAULT NULL,
     `email`    VARCHAR(150) DEFAULT NULL UNIQUE,
     `password` VARCHAR(255) DEFAULT NULL,
-    `profileImageUrl` VARCHAR(255) DEFAULT NULL,
-
+    `profile_image_url` VARCHAR(255) DEFAULT NULL,
     `balance` DOUBLE DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -36,6 +35,7 @@ CREATE TABLE transaction
     `receiver_id`   BIGINT DEFAULT NULL,
     `description`   VARCHAR(255) DEFAULT NULL,
     `amount`        DOUBLE DEFAULT NULL,
+    `fee`        DOUBLE DEFAULT NULL,
     `execution_date` TIMESTAMP,
     `currency`        VARCHAR(5) DEFAULT NULL,
     FOREIGN KEY (`sender_id`) REFERENCES user (`id`) ON DELETE CASCADE,
@@ -47,10 +47,12 @@ CREATE VIEW historic AS
 SELECT
     tr.id,
     tr.sender_id,
-    sed.username AS sender_username,
+    sed.profile_name AS sender_profile_name,
     tr.receiver_id,
-    rec.username AS receiver_username,
+    rec.profile_name AS receiver_profile_name,
+    tr.description,
     tr.amount,
+    tr.fee,
     tr.currency,
     tr.execution_date
 FROM transaction tr

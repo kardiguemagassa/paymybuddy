@@ -20,12 +20,14 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name="profile_name")
     private String name;
 
     @Column(unique = true, nullable = false)
     private String email;
 
     private String password;
+    @Column(name = "profile_image_url")
     private String profileImageUrl;
     private double balance;
 
@@ -55,7 +57,6 @@ public class User implements UserDetails {
     @JsonIgnore
     private List<Transaction> receivedTransactions = new ArrayList<>();
 
-
     //transaction
     public void addSentTransaction(Transaction transaction) {
         this.sentTransactions.add(transaction);
@@ -66,7 +67,6 @@ public class User implements UserDetails {
         this.receivedTransactions.add(transaction);
         transaction.setReceiver(this);
     }
-
 
     //connection
     public void addConnection(User contact) {
