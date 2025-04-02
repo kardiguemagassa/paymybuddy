@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 public interface TransactionService {
 
     Page<Transaction> getUserTransactionsPaginated(String email, Pageable pageable);
-
     Transaction makeTransaction(String senderEmail, String receiverEmail,
                                 double amount, String description, String currency) throws UserNotFoundException, InsufficientBalanceException;
     User getUserWithConnections(String username) throws UserNotFoundException;

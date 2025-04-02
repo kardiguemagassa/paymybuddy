@@ -26,12 +26,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final CurrencyServiceImpl currencyService;
     private static final double FEE_PERCENTAGE = 0.005;
 
-//    @Transactional
-//    @Override
-//    public List<Transaction> getUserTransactions(String email) {
-//        return transactionRepository.findAllByUserEmail(email);
-//    }
-
     @Override
     public Page<Transaction> getUserTransactionsPaginated(String email, Pageable pageable) {
         return transactionRepository.findBySenderEmailOrReceiverEmail(email, email, pageable);

@@ -20,7 +20,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Set;
 import static com.openclassrooms.utils.CurrencySymbols.SUPPORTED_CURRENCIES;
 
-
 @Controller
 @RequestMapping("/transaction")
 @RequiredArgsConstructor
@@ -70,7 +69,6 @@ public class TransactionController {
         model.addAttribute("user", user);
         return "transaction";
     }
-
 
     @PostMapping
     public String makeTransaction(
