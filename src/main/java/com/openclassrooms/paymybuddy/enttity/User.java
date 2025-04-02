@@ -2,6 +2,10 @@ package com.openclassrooms.paymybuddy.enttity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,12 +25,22 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(name="profile_name")
+    @NotBlank(message = "Le nom est obligatoire")
+    @Size(min = 2, max = 50, message = "Le nom doit contenir entre 2 et 50 caractères")
     private String name;
 
     @Column(unique = true, nullable = false)
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "Format d'email invalide")
     private String email;
 
+    @NotBlank(message = "Le mot de passe est obligatoire")
+    @Size(min = 8, message = "Le mot de passe doit avoir au moins 8 caractères")
+    @Pattern(regexp = ".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*",
+            message = "Le mot de passe doit contenir 8 caractères minimum avec soit : 1 majuscule, " +
+                    "1 minuscule et 1 chiffre ou 1 majuscule, 1 minuscule et 1 caractère spécial")
     private String password;
+
     @Column(name = "profile_image_url")
     private String profileImageUrl;
     private double balance;
@@ -57,16 +71,18 @@ public class User implements UserDetails {
     @JsonIgnore
     private List<Transaction> receivedTransactions = new ArrayList<>();
 
-    //transaction
-    public void addSentTransaction(Transaction transaction) {
-        this.sentTransactions.add(transaction);
-        transaction.setSender(this);
-    }
 
-    public void addReceivedTransaction(Transaction transaction) {
-        this.receivedTransactions.add(transaction);
-        transaction.setReceiver(this);
-    }
+//    //transaction
+//    public void addSentTransaction(Transaction transaction) {
+//        this.sentTransactions.add(transaction);
+//        transaction.setSender(this);
+//    }
+//
+//    public void addReceivedTransaction(Transaction transaction) {
+//        this.receivedTransactions.add(transaction);
+//        transaction.setReceiver(this);
+//    }
+
 
     //connection
     public void addConnection(User contact) {

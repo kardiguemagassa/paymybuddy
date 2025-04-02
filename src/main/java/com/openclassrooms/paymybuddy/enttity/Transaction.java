@@ -29,18 +29,11 @@ public class Transaction {
     private String description;
     private double amount;
     private double fee;
-    private String currency = "EUR";
+
+    @Column(length = 3)
+    private String currency;
 
     @Column(name = "execution_date", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public static Transaction create(User sender, User receiver, double amount, String description, double feePercentage) {
-        Transaction transaction = new Transaction();
-        transaction.setSender(sender);
-        transaction.setReceiver(receiver);
-        transaction.setAmount(amount);
-        transaction.setFee(amount * feePercentage);
-        transaction.setDescription(description);
-        return transaction;
-    }
 }
