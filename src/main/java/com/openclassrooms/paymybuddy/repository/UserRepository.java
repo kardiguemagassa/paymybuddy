@@ -13,15 +13,14 @@ import java.util.Set;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Query("SELECT u FROM User u WHERE u.email = :email")
-    Optional<User> findUserByEmail(@Param("email") String email);
+    Optional<User> findByEmail(String email);
 
     // Recherche users non encore connecté ou en base à user courant
     @Query("SELECT u FROM User u WHERE u.email != :userEmail " +
             "AND u.id NOT IN (SELECT c.id FROM User u JOIN u.connections c WHERE u.id = :userId)")
     List<User> findPotentialConnections(@Param("userEmail") String userEmail, @Param("userId") Long userId);
 
-    // List des relations d'un user connections + connectedBy
+    // Set des relations d'un user connections + connectedBy
     @Query("SELECT DISTINCT u FROM User user " +
             "LEFT JOIN user.connections c " +
             "LEFT JOIN user.connectedBy cb " +
@@ -32,17 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     //transaction
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.connections WHERE u.email = :email")
     Optional<User> findWithConnectionsByEmail(@Param("email") String email);
-
-    // uniquement les connections, ou en base
-    @Query("SELECT c FROM User u JOIN u.connections c WHERE u.email = :email")
-    Set<User> findDirectConnectionsByEmail(@Param("email") String email);
-
-    // Récupère user avec ses relations avec fetch eager
-    @Query("SELECT DISTINCT u FROM User u " +
-            "LEFT JOIN FETCH u.connections " +
-            "LEFT JOIN FETCH u.connectedBy " +
-            "WHERE u.email = :email")
-    Optional<User> findUserWithRelationsByEmail(@Param("email") String email);
 
 
 }
