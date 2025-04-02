@@ -26,24 +26,26 @@
 
                     <div class="myForm">
                         <form th:action="@{/register}" th:object="${user}" method="post">
+
                             <div class="box-body bozero mx2p">
 
-                                <!-- Error message display -->
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <div th:if="${error}" class="alert alert-danger" role="alert">
-                                                <p th:text="${error}"></p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- Messages erreur -->
+                                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+                                <!-- Validation champs -->
+                                <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">
+                                    <ul>
+                                        <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                                    </ul>
                                 </div>
-                                <!-- End error message display -->
+
 
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">
-                                            <input placeholder="Nom d'utilisateur" name="username" th:field="*{username}"
+                                            <input placeholder="Nom d'utilisateur" name="name" th:field="*{name}"
                                                     type="text"
                                                     style="width: 100%"
                                                     class="form-control"
@@ -88,8 +90,5 @@
     </div>
 </section>
 </body>
-
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 
 </html>

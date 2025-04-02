@@ -2,18 +2,21 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Pay my buddy</title>
-    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css} "/>
-    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/font-awesome.min.css}"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Pay My Buddy - Accueil</title>
+    <link rel="icon" th:href="@{/images/favicon.ico}" type="image/x-icon">
     <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/styles.css}"/>
-    <meta charset="UTF-8">
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css} "/>
+    <link th:rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.css}"/>
 </head>
 <body class="background">
 
 <nav class="main_div">
 
     <div class="logo_left">
-        <label class="logo">Pay My Buddy</label>
+        <label class="logo logo-index">Pay My Buddy</label>
         <label class="logo_com">.com</label>
     </div>
     <div class="logo_right">
@@ -22,13 +25,54 @@
         </label>
     </div>
 </nav>
+<main class="container my-5">
+    <section class="hero-section text-center py-5">
+        <h1 class="display-4 mb-4">Transférez de l'argent simplement</h1>
+        <p class="lead mb-5">Pay My Buddy vous permet d'envoyer et recevoir de l'argent partout en toute sécurité.</p>
 
-<footer>
-    <label class="copy-right">Copyright © paymybuddy.com</label>
+        <div class="cta-buttons">
+            <a th:href="@{/register}" class="btn btn-primary btn-lg mr-3">
+                <i class="fas fa-user-plus"></i> S'inscrire
+            </a>
+            <a th:href="@{/about}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-info-circle"></i> En savoir plus
+            </a>
+        </div>
+    </section>
+
+    <section class="features-section row mt-5">
+        <div class="col-md-4 feature-card">
+            <i class="fas fa-exchange-alt feature-icon"></i>
+            <h3>Transferts instantanés</h3>
+            <p>Envoyez de l'argent à vos amis en quelques clics</p>
+        </div>
+        <div class="col-md-4 feature-card">
+            <i class="fas fa-shield-alt feature-icon"></i>
+            <h3>Sécurité garantie</h3>
+            <p>Transactions cryptées et protégées</p>
+        </div>
+        <div class="col-md-4 feature-card">
+            <i class="fas fa-euro-sign feature-icon"></i>
+            <h3>Frais transparents</h3>
+            <p>Des frais fixes et connus à l'avance</p>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p class="mb-2">Pay My Buddy - Solution de paiement entre particuliers</p>
+        <div class="footer-links">
+            <a th:href="@{#}" class="text-white">À propos</a>
+            <a th:href="@{#}" class="text-white">Contact</a>
+            <a th:href="@{#}" class="text-white">Confidentialité</a>
+        </div>
+        <p class="copyright mt-3 mb-0">
+            &copy; <span th:text="${#temporals.year(#temporals.createToday())}"></span> paymybuddy.com
+        </p>
+    </div>
 </footer>
-</body>
 
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+</body>
 
 </html>
