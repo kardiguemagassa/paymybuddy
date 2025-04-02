@@ -23,7 +23,7 @@ public class UserConnectionServiceImpl implements UserConnectionService {
 
     @Override
     public Set<User> getUserConnections(String userEmail) {
-        User user = userRepository.findUserByEmail(userEmail)
+        User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + userEmail));
 
         return userRepository.findRelationsByEmail(userEmail);
@@ -32,10 +32,10 @@ public class UserConnectionServiceImpl implements UserConnectionService {
     @Transactional
     @Override
     public boolean addConnection(String currentUserEmail, String targetEmail) {
-        User currentUser = userRepository.findUserByEmail(currentUserEmail)
+        User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
 
-        User targetUser = userRepository.findUserByEmail(targetEmail)
+        User targetUser = userRepository.findByEmail(targetEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur cible introuvable: " + targetEmail));
 
         // Vérifie si la relation existe déjà
@@ -54,7 +54,7 @@ public class UserConnectionServiceImpl implements UserConnectionService {
 
     @Override
     public Set<User> getPotentialConnections(String userEmail) throws UserNotFoundException {
-        User currentUser = userRepository.findUserByEmail(userEmail)
+        User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
         return new HashSet<>(userRepository.findPotentialConnections(userEmail, currentUser.getId()));
@@ -63,13 +63,13 @@ public class UserConnectionServiceImpl implements UserConnectionService {
     @Override
     public boolean updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
             throws UserNotFoundException {
-        User currentUser = userRepository.findUserByEmail(currentUserEmail)
+        User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
-        User oldConnection = userRepository.findUserByEmail(oldConnectionEmail)
+        User oldConnection = userRepository.findByEmail(oldConnectionEmail)
                 .orElseThrow(() -> new UserNotFoundException("Ancienne connexion introuvable"));
 
-        User newConnection = userRepository.findUserByEmail(newConnectionEmail)
+        User newConnection = userRepository.findByEmail(newConnectionEmail)
                 .orElseThrow(() -> new UserNotFoundException("Nouvelle connexion introuvable"));
 
         if (!currentUser.getConnections().contains(oldConnection)) {
@@ -90,10 +90,10 @@ public class UserConnectionServiceImpl implements UserConnectionService {
     @Transactional
     @Override
     public boolean removeConnection(String currentUserEmail, String targetEmail) {
-        User currentUser = userRepository.findUserByEmail(currentUserEmail)
+        User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
 
-        User targetUser = userRepository.findUserByEmail(targetEmail)
+        User targetUser = userRepository.findByEmail(targetEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur cible introuvable: " + targetEmail));
 
         if (!currentUser.getConnections().contains(targetUser)) {

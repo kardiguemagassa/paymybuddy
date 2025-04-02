@@ -8,8 +8,11 @@ import com.openclassrooms.paymybuddy.repository.TransactionRepository;
 
 import com.openclassrooms.paymybuddy.repository.UserRepository;
 import com.openclassrooms.paymybuddy.service.TransactionService;
+import com.openclassrooms.paymybuddy.service.currencyServiceImpl.CurrencyServiceImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +23,18 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final CurrencyServiceImpl currencyService;
     private static final double FEE_PERCENTAGE = 0.005;
 
-    @Transactional
+//    @Transactional
+//    @Override
+//    public List<Transaction> getUserTransactions(String email) {
+//        return transactionRepository.findAllByUserEmail(email);
+//    }
+
     @Override
-    public List<Transaction> getUserTransactions(String email) {
-        return transactionRepository.findAllByUserEmail(email);
+    public Page<Transaction> getUserTransactionsPaginated(String email, Pageable pageable) {
+        return transactionRepository.findBySenderEmailOrReceiverEmail(email, email, pageable);
     }
 
     @Transactional
@@ -38,10 +47,11 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     @Override
     public User getUserByTransactionEmail(String email) throws UserNotFoundException {
-        return userRepository.findUserByEmail(email)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé avec l'email: " + email));
     }
 
+    @Override
     public User addBalance(String email, double amount) throws UserNotFoundException {
         if (amount <= 0) {
             throw new IllegalArgumentException("Le montant doit être positif");
@@ -56,33 +66,47 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     @Override
     public Transaction makeTransaction(String senderEmail, String receiverEmail,
-                                       double amount, String description) throws UserNotFoundException, InsufficientBalanceException {
+                                       double amount, String transactionCurrency,
+                                       String description)
+            throws UserNotFoundException, InsufficientBalanceException {
 
-        User sender = getUserByTransactionEmail(senderEmail);
-        User receiver = getUserByTransactionEmail(receiverEmail);
+        User sender = userRepository.findByEmail(senderEmail)
+                .orElseThrow(() -> new UserNotFoundException("Expéditeur non trouvé"));
+        User receiver = userRepository.findByEmail(receiverEmail)
+                .orElseThrow(() -> new UserNotFoundException("Destinataire non trouvé"));
 
-        // Validation
-        validateTransaction(sender, receiver, amount);
 
-        // Calcul des montants
-        double fee = amount * FEE_PERCENTAGE;
-        double totalAmount = amount + fee;
+        validateTransaction(sender, receiver, amount, transactionCurrency);
 
-        // Mise à jour des soldes
-        sender.setBalance(sender.getBalance() - totalAmount);
-        receiver.setBalance(receiver.getBalance() + amount);
+        // 3. Conversion et calcul des frais
+        double amountInEur = currencyService.convertToEur(amount, transactionCurrency);
+        double feeInEur = amountInEur * FEE_PERCENTAGE;
+        double totalInEur = amountInEur + feeInEur;
 
-        // Création et sauvegarde
-        Transaction transaction = Transaction.create(sender, receiver, amount, description, FEE_PERCENTAGE);
+        // 4. Mise à jour des soldes
+        sender.setBalance(sender.getBalance() - totalInEur);
+        receiver.setBalance(receiver.getBalance() + amountInEur);
+
+        Transaction transaction = new Transaction();
+        transaction.setSender(sender);
+        transaction.setReceiver(receiver);
+        transaction.setAmount(amount);
+        transaction.setFee(feeInEur);
+        transaction.setCurrency(transactionCurrency);
+        transaction.setDescription(description);
+
+        userRepository.saveAll(List.of(sender, receiver));
         return transactionRepository.save(transaction);
     }
 
-    private void validateTransaction(User sender, User receiver, double amount) throws InsufficientBalanceException {
+    private void validateTransaction(User sender, User receiver, double amount, String currency)
+            throws InsufficientBalanceException {
+
         if (sender == null || receiver == null) {
-            throw new IllegalArgumentException("Le destinataire ne peut pas être nul");
+            throw new IllegalArgumentException("L'expéditeur et le destinataire doivent être spécifiés");
         }
         if (sender.equals(receiver)) {
-            throw new IllegalArgumentException("Impossible de vous envoyer de l'argent");
+            throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même");
         }
         if (amount <= 0) {
             throw new IllegalArgumentException("Le montant doit être positif");
@@ -90,8 +114,23 @@ public class TransactionServiceImpl implements TransactionService {
         if (!sender.getConnections().contains(receiver)) {
             throw new IllegalStateException("Vous ne pouvez envoyer de l'argent qu'à vos relations");
         }
-        if (sender.getBalance() < (amount * (1 + FEE_PERCENTAGE))) {
-            throw new InsufficientBalanceException("Solde insuffisant, frais compris");
+        if (currency == null || currency.length() != 3) {
+            throw new IllegalArgumentException("Devise invalide");
+        }
+
+        // Conversion pour vérification du solde
+        double amountInEur = currencyService.convertToEur(amount, currency);
+        double totalWithFees = amountInEur * (1 + FEE_PERCENTAGE);
+
+        if (sender.getBalance() < totalWithFees) {
+            throw new InsufficientBalanceException(
+                    String.format("Solde insuffisant. Nécessaire: %.2f EUR (%.2f %s + %.2f EUR de frais)",
+                            totalWithFees,
+                            amount,
+                            currency,
+                            amountInEur * FEE_PERCENTAGE)
+            );
         }
     }
+
 }

@@ -1,18 +1,18 @@
 package com.openclassrooms.paymybuddy.service;
 
-
 import com.openclassrooms.paymybuddy.enttity.Transaction;
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.exception.InsufficientBalanceException;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface TransactionService {
 
-    List<Transaction> getUserTransactions(String email);
+    Page<Transaction> getUserTransactionsPaginated(String email, Pageable pageable);
+
     Transaction makeTransaction(String senderEmail, String receiverEmail,
-                                double amount, String description) throws UserNotFoundException, InsufficientBalanceException;
+                                double amount, String description, String currency) throws UserNotFoundException, InsufficientBalanceException;
     User getUserWithConnections(String username) throws UserNotFoundException;
     User addBalance(String email, double amount) throws UserNotFoundException;
     User getUserByTransactionEmail(String email) throws UserNotFoundException;

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,11 +33,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User getUserById(Long id) throws UserNotFoundException {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Utilisateur non trouvé par son identifiant: " + id));
-    }
-
     @Override
     public void registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -46,13 +42,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public User getUserByEmail(String email) throws UserNotFoundException {
-        return userRepository.findUserByEmail(email)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé avec l'email: " + email));
     }
 
     @Override
     public Optional<User> findUserByEmail(String email) {
-        return userRepository.findUserByEmail(email);
+        return userRepository.findByEmail(email);
     }
 
     @Override
@@ -61,6 +57,12 @@ public class UserServiceImpl implements UserService {
             throws IOException, UserNotFoundException {
 
         User user = getUserByEmail(email);
+
+        if (!email.equals(newEmail)) {
+            userRepository.findByEmail(newEmail).ifPresent(u -> {
+                throw new EmailExistsException("Cet email est déjà utilisé");
+            });
+        }
 
         try {
             if (profileImage != null && !profileImage.isEmpty()) {
@@ -93,24 +95,22 @@ public class UserServiceImpl implements UserService {
     public void updatePassword(String email, String currentPassword, String newPassword, String confirmPassword)
             throws UserNotFoundException, InvalidPasswordException, PasswordMismatchException {
 
-        // Vérifier que l'utilisateur existe
-        User user = userRepository.findUserByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur non trouvé avec l'email: " + email));
 
-        // Vérifier que le mot de passe actuel est correct
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new InvalidPasswordException("Le mot de passe actuel est incorrect");
         }
 
-        // Vérifier que les nouveaux mots de passe correspondent
         if (!newPassword.equals(confirmPassword)) {
             throw new PasswordMismatchException("Les nouveaux mots de passe ne correspondent pas");
         }
 
-        // Vérifier que le nouveau mot de passe est différent de l'ancien
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new InvalidPasswordException("Le nouveau mot de passe doit être différent de l'actuel");
         }
+
+        validatePassword(newPassword);
 
         // Mettre à jour le mot de passe
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -120,9 +120,25 @@ public class UserServiceImpl implements UserService {
     }
 
     private void validatePassword(String password) throws InvalidPasswordException {
+
         if (password.length() < 8) {
             throw new InvalidPasswordException("Le mot de passe doit contenir au moins 8 caractères");
         }
 
+        if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
+            throw new InvalidPasswordException("Le mot de passe doit contenir au moins un caractère spécial");
+        }
+
+        if (!password.matches(".*\\d.*")) {
+            throw new InvalidPasswordException("Le mot de passe doit contenir au moins un chiffre");
+        }
+
+        if (!password.matches(".*[A-Z].*")) {
+            throw new InvalidPasswordException("Le mot de passe doit contenir au moins une majuscule");
+        }
+
+        if (!password.matches(".*[a-z].*")) {
+            throw new InvalidPasswordException("Le mot de passe doit contenir au moins une minuscule");
+        }
     }
 }
