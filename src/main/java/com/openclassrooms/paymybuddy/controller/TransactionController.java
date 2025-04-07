@@ -3,7 +3,7 @@ package com.openclassrooms.paymybuddy.controller;
 import com.openclassrooms.paymybuddy.enttity.Transaction;
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
-import com.openclassrooms.paymybuddy.service.transactionImpl.TransactionServiceImpl;
+import com.openclassrooms.paymybuddy.service.serviceImpl.TransactionServiceImpl;
 import com.openclassrooms.utils.CurrencySymbols;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -79,36 +79,15 @@ public class TransactionController {
             @RequestParam String currency,
             RedirectAttributes redirectAttributes) {
 
-        try {
-            //validation stricte
-            currency = currency.trim().toUpperCase();
+        //validation stricte
+        currency = currency.trim().toUpperCase();
 
-            if (!SUPPORTED_CURRENCIES.contains(currency)) {
-                throw new IllegalArgumentException(
-                        String.format("Devise '%s' non supportée. Utilisez: %s",
-                                currency, String.join(", ", SUPPORTED_CURRENCIES))
-                );
-            }
-
-            Transaction transaction = transactionService.makeTransaction(
-                    userDetails.getUsername(),
-                    receiverEmail,
-                    amount,
-                    currency,
-                    description
-            );
-
-            redirectAttributes.addFlashAttribute("success",
-                    String.format("Transfert réussi: %.2f %s (frais: %.2f %s)",
-                            amount, currency, transaction.getFee(), currency));
-
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Erreur technique: " + e.getMessage());
+        if (!SUPPORTED_CURRENCIES.contains(currency)) {
+            throw new IllegalArgumentException(String.format("Devise '%s' non supportée. Utilisez: %s", currency, String.join(", ", SUPPORTED_CURRENCIES)));
         }
 
+        Transaction transaction = transactionService.makeTransaction(userDetails.getUsername(), receiverEmail, amount, currency, description);
+        redirectAttributes.addFlashAttribute("success", String.format("Transfert réussi: %.2f %s (frais: %.2f %s)", amount, currency, transaction.getFee(), currency));
         return "redirect:/transaction";
     }
 }

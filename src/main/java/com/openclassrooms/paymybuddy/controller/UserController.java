@@ -1,31 +1,36 @@
 package com.openclassrooms.paymybuddy.controller;
 
 import com.openclassrooms.paymybuddy.enttity.User;
-import com.openclassrooms.paymybuddy.service.userServiceImpl.UserServiceImpl;
+import com.openclassrooms.paymybuddy.service.serviceImpl.UserServiceImpl;
+import com.openclassrooms.paymybuddy.validator.UserValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.Collections;
-import java.util.Map;
-
 
 @Controller
 @RequiredArgsConstructor
 @RequestMapping
+@Validated
 public class UserController {
 
     private final UserServiceImpl userService;
+    private final UserValidator userValidator;
+
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.addValidators(userValidator); // Enregistrement du validateur
+    }
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
@@ -36,37 +41,23 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult,
-                               RedirectAttributes redirectAttributes) {
+    public String registerUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
-        // Validation des champs
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.user", bindingResult);
             redirectAttributes.addFlashAttribute("user", user);
             return "redirect:/register";
         }
 
-        if (!isValidEmail(user.getEmail())) {
-            redirectAttributes.addFlashAttribute("error", "Format d'email invalide");
-            redirectAttributes.addFlashAttribute("user", user);
-            return "redirect:/register";
-        }
-
         if (userService.findUserByEmail(user.getEmail()).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "Cet email est déjà utilisé");
+            bindingResult.rejectValue("email", "email.exists", "Cet email est déjà utilisé");
             redirectAttributes.addFlashAttribute("user", user);
             return "redirect:/register";
         }
 
-        try {
-            userService.registerUser(user);
-            redirectAttributes.addFlashAttribute("success", "Inscription réussie !");
-            return "redirect:/login";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Erreur lors de l'inscription");
-            redirectAttributes.addFlashAttribute("user", user);
-            return "redirect:/register";
-        }
+        userService.registerUser(user);
+        redirectAttributes.addFlashAttribute("success", "Inscription réussie !");
+        return "redirect:/login";
     }
 
     @GetMapping("/login")
@@ -96,17 +87,5 @@ public class UserController {
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
         return "redirect:/";
-    }
-
-    private boolean isValidEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        return email != null && email.matches(emailRegex);
-    }
-
-    @GetMapping("/check-email")
-    @ResponseBody
-    public Map<String, Boolean> checkEmailAvailable(@RequestParam String email) {
-        boolean available = !userService.findUserByEmail(email).isPresent();
-        return Collections.singletonMap("available", available);
     }
 }
