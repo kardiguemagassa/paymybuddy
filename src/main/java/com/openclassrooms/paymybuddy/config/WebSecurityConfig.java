@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.config;
 
-import com.openclassrooms.paymybuddy.service.CustomUserDetailsService;
+import com.openclassrooms.paymybuddy.service.serviceImpl.CustomUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
 import static com.openclassrooms.paymybuddy.constant.SecurityConstant.*;
 
 @Configuration
@@ -51,7 +50,6 @@ public class WebSecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
-//                        .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()

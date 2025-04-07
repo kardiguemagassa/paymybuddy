@@ -7,9 +7,13 @@ import com.openclassrooms.paymybuddy.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
+import org.passay.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,7 @@ import java.nio.file.Paths;
 
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +61,7 @@ public class UserServiceImpl implements UserService {
             throws IOException, UserNotFoundException {
 
         User user = getUserByEmail(email);
+        validateEmail(newEmail);
 
         if (!email.equals(newEmail)) {
             userRepository.findByEmail(newEmail).ifPresent(u -> {
@@ -79,8 +85,10 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Value("${file.upload-dir:src/main/resources/static/uploads/}")
+    private String uploadDir; // Ajoutez ce champ
     private String storeProfileImage(MultipartFile file) throws IOException {
-        String uploadDir = "src/main/resources/static/uploads/";
+        //String uploadDir = "src/main/resources/static/uploads/";
         Files.createDirectories(Paths.get(uploadDir));
 
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -91,31 +99,56 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void updatePassword(String email, String currentPassword, String newPassword, String confirmPassword)
             throws UserNotFoundException, InvalidPasswordException, PasswordMismatchException {
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Utilisateur non trouvé avec l'email: " + email));
+        try {
 
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new InvalidPasswordException("Le mot de passe actuel est incorrect");
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> {
+                        String message = "Utilisateur non trouvé avec l'email: " + email;
+                        LOGGER.error(message);
+                        return new UserNotFoundException(message);
+                    });
+
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                String message = "Mot de passe actuel incorrect: " + email;
+                LOGGER.warn(message);
+                throw new InvalidPasswordException(message);
+            }
+
+            if (!StringUtils.equals(newPassword, confirmPassword)) {
+                String message = "Les nouveaux mots de passe ne correspondent pas: " + email;
+                LOGGER.warn(message);
+                throw new PasswordMismatchException(message);
+            }
+
+            if (passwordEncoder.matches(newPassword, user.getPassword())) {
+                String message = "Le nouveau mot de passe doit être différent de l'actuel: " + email;
+                LOGGER.warn(message);
+                throw new InvalidPasswordException(message);
+            }
+
+            // Validation des règles du nouveau mot de passe
+            validatePassword(newPassword);
+
+            // Mise à jour du mot de passe
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            LOGGER.info("Mot de passe mis à jour avec succès pour l'utilisateur: {}", email);
+
+        } catch (Exception e) {
+            LOGGER.error("Échec de la mise à jour du mot de passe pour l'email: " + email, e);
+            throw e;
         }
+    }
 
-        if (!newPassword.equals(confirmPassword)) {
-            throw new PasswordMismatchException("Les nouveaux mots de passe ne correspondent pas");
+    private void validateEmail(String email) {
+        if (!EmailValidator.getInstance().isValid(email)) {
+            throw new IllegalArgumentException("L'email n'est pas valide");
         }
-
-        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new InvalidPasswordException("Le nouveau mot de passe doit être différent de l'actuel");
-        }
-
-        validatePassword(newPassword);
-
-        // Mettre à jour le mot de passe
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        LOGGER.info("Mot de passe mis à jour pour l'utilisateur: {}", email);
     }
 
     private void validatePassword(String password) throws InvalidPasswordException {

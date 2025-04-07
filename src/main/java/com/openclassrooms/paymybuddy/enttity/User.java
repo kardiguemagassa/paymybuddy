@@ -2,7 +2,6 @@ package com.openclassrooms.paymybuddy.enttity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -31,7 +30,10 @@ public class User implements UserDetails {
 
     @Column(unique = true, nullable = false)
     @NotBlank(message = "L'email est obligatoire")
-    @Email(message = "Format d'email invalide")
+    @Pattern(regexp = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
+            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\."
+            + "(com|fr|net|org|gov|edu|io|co|uk|de|it|es|be|lu|ch|ca|eu))$",
+            message = "L'email doit utiliser une extension valide (.com, .fr, etc.)")
     private String email;
 
     @NotBlank(message = "Le mot de passe est obligatoire")
@@ -71,23 +73,13 @@ public class User implements UserDetails {
     @JsonIgnore
     private List<Transaction> receivedTransactions = new ArrayList<>();
 
-
-//    //transaction
-//    public void addSentTransaction(Transaction transaction) {
-//        this.sentTransactions.add(transaction);
-//        transaction.setSender(this);
-//    }
-//
-//    public void addReceivedTransaction(Transaction transaction) {
-//        this.receivedTransactions.add(transaction);
-//        transaction.setReceiver(this);
-//    }
-
+    @Transient
+    private Double temporaryAmountAdded;
 
     //connection
     public void addConnection(User contact) {
         if (contact == null || this.equals(contact)) {
-            throw new IllegalArgumentException("Invalid friend connection");
+            throw new IllegalArgumentException("L'utilisateur n'est pas connecter");
         }
         this.connections.add(contact);
         contact.getConnectedBy().add(this);

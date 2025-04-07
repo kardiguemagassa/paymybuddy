@@ -28,4 +28,3 @@ spring:
 
   supported:
     currencies: EUR,USD,XOF,JPY,CNY,RUB,GBP
-
