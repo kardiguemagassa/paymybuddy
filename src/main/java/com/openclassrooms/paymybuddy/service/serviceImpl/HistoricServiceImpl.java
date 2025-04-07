@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service.historicImpl;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import com.openclassrooms.paymybuddy.enttity.Historic;
 import com.openclassrooms.paymybuddy.enttity.User;

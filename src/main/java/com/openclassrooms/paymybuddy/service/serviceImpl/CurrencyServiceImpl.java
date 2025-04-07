@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service.currencyServiceImpl;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

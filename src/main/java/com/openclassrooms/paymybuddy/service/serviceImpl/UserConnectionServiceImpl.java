@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service.userConnectionImpl;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
@@ -31,17 +31,23 @@ public class UserConnectionServiceImpl implements UserConnectionService {
 
     @Transactional
     @Override
-    public boolean addConnection(String currentUserEmail, String targetEmail) {
+    public void addConnection(String currentUserEmail, String targetEmail) {
+
+        if (currentUserEmail.equals(targetEmail)) {
+            throw new IllegalArgumentException("Vous ne pouvez pas vous ajouter vous-même");
+        }
+
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
 
         User targetUser = userRepository.findByEmail(targetEmail)
-                .orElseThrow(() -> new RuntimeException("Utilisateur cible introuvable: " + targetEmail));
+                .orElseThrow(() -> new RuntimeException("L'utilisateur n'existe pas: " + targetEmail));
 
         // Vérifie si la relation existe déjà
         if (currentUser.getConnections().contains(targetUser)) {
             LOGGER.info("Relation déjà existante entre {} et {}", currentUserEmail, targetEmail);
-            return false;
+            throw new IllegalArgumentException("Cette relation exist déjà! veuillez renseigner une autre");
+            //return false;
         }
 
         // Ajout connexion bidirectionnelle
@@ -49,7 +55,6 @@ public class UserConnectionServiceImpl implements UserConnectionService {
         userRepository.save(currentUser);
 
         LOGGER.info("Nouvelle relation ajoutée: {} <-> {}", currentUserEmail, targetEmail);
-        return true;
     }
 
     @Override
@@ -61,7 +66,7 @@ public class UserConnectionServiceImpl implements UserConnectionService {
     }
 
     @Override
-    public boolean updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
+    public void updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
             throws UserNotFoundException {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
@@ -84,12 +89,11 @@ public class UserConnectionServiceImpl implements UserConnectionService {
         currentUser.addConnection(newConnection);
         userRepository.save(currentUser);
 
-        return true;
     }
 
     @Transactional
     @Override
-    public boolean removeConnection(String currentUserEmail, String targetEmail) {
+    public void removeConnection(String currentUserEmail, String targetEmail) {
         User currentUser = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + currentUserEmail));
 
@@ -98,14 +102,13 @@ public class UserConnectionServiceImpl implements UserConnectionService {
 
         if (!currentUser.getConnections().contains(targetUser)) {
             LOGGER.info("Aucune relation existante à supprimer entre {} et {}", currentUserEmail, targetEmail);
-            return false;
+            return;
         }
 
         currentUser.removeConnection(targetUser);
         userRepository.save(currentUser);
 
         LOGGER.info("Relation supprimée: {} -/-> {}", currentUserEmail, targetEmail);
-        return true;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service.transactionImpl;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import com.openclassrooms.paymybuddy.enttity.Transaction;
 import com.openclassrooms.paymybuddy.enttity.User;
@@ -8,7 +8,6 @@ import com.openclassrooms.paymybuddy.repository.TransactionRepository;
 
 import com.openclassrooms.paymybuddy.repository.UserRepository;
 import com.openclassrooms.paymybuddy.service.TransactionService;
-import com.openclassrooms.paymybuddy.service.currencyServiceImpl.CurrencyServiceImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final CurrencyServiceImpl currencyService;
+    private final SecurityValidationImpl securityValidation;
+    private final Random random = new Random();
     private static final double FEE_PERCENTAGE = 0.005;
 
     @Override
@@ -46,15 +48,33 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public User addBalance(String email, double amount) throws UserNotFoundException {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Le montant doit être positif");
+    public User addBalance(String email, Double amount, String randomAmount) throws UserNotFoundException,IllegalArgumentException {
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("L'email est requis pour le rechargement du solde");
         }
 
-        User user = getUserByTransactionEmail(email);
+        if (amount == null && (randomAmount == null || randomAmount.isBlank())) {
+            throw new IllegalArgumentException("Veuillez spécifier un montant pour le rechargement");
+        }
 
-        user.setBalance(user.getBalance() + amount);
-        return userRepository.save(user);
+        User userBefore = getUserByTransactionEmail(email);
+        double previousBalance = userBefore.getBalance();
+
+        // Calcul et application du montant
+        double amountToAdd = calculateAmountToAdd(amount, randomAmount);
+        userBefore.setBalance(previousBalance + amountToAdd);
+        User updatedUser = userRepository.save(userBefore);
+
+        // Stocker le montant ajouté pour le message
+        updatedUser.setTemporaryAmountAdded(amountToAdd);
+
+        return updatedUser;
+    }
+
+    public String getFormattedBalanceUpdateMessage(User user, Double amountOrNull) {
+        double amountAdded = amountOrNull != null ? amountOrNull : user.getTemporaryAmountAdded();
+        return String.format("Rechargement réussi ! %.2f € ajoutés. Nouveau solde: %.2f €", amountAdded, user.getBalance());
     }
 
     @Transactional
@@ -70,7 +90,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new UserNotFoundException("Destinataire non trouvé"));
 
 
-        validateTransaction(sender, receiver, amount, transactionCurrency);
+        securityValidation.validateTransaction(sender, receiver, amount, transactionCurrency);
 
         // 3. Conversion et calcul des frais
         double amountInEur = currencyService.convertToEur(amount, transactionCurrency);
@@ -93,38 +113,17 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    private void validateTransaction(User sender, User receiver, double amount, String currency)
-            throws InsufficientBalanceException {
-
-        if (sender == null || receiver == null) {
-            throw new IllegalArgumentException("L'expéditeur et le destinataire doivent être spécifiés");
-        }
-        if (sender.equals(receiver)) {
-            throw new IllegalArgumentException("Impossible d'envoyer de l'argent à soi-même");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Le montant doit être positif");
-        }
-        if (!sender.getConnections().contains(receiver)) {
-            throw new IllegalStateException("Vous ne pouvez envoyer de l'argent qu'à vos relations");
-        }
-        if (currency == null || currency.length() != 3) {
-            throw new IllegalArgumentException("Devise invalide");
+    private double calculateAmountToAdd(Double amount, String randomAmount) {
+        if (randomAmount != null && randomAmount.equals("random")) {
+            double randomValue = 10 + (2000 - 10) * random.nextDouble();
+            return Math.round(randomValue * 100.0) / 100.0; // Arrondi à 2 décimales
         }
 
-        // Conversion pour vérification du solde
-        double amountInEur = currencyService.convertToEur(amount, currency);
-        double totalWithFees = amountInEur * (1 + FEE_PERCENTAGE);
-
-        if (sender.getBalance() < totalWithFees) {
-            throw new InsufficientBalanceException(
-                    String.format("Solde insuffisant. Nécessaire: %.2f EUR (%.2f %s + %.2f EUR de frais)",
-                            totalWithFees,
-                            amount,
-                            currency,
-                            amountInEur * FEE_PERCENTAGE)
-            );
+        if (amount != null && amount > 0) {
+            return amount;
         }
+
+        throw new IllegalArgumentException("Montant invalide");
     }
 
 }

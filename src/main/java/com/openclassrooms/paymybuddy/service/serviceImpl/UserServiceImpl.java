@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service.userServiceImpl;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.exception.*;
@@ -8,8 +8,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
-import org.passay.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +23,6 @@ import java.nio.file.Paths;
 
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +33,9 @@ public class UserServiceImpl implements UserService {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityValidationImpl securityValidationImpl;
+    @Value("${file.upload-dir:src/main/resources/static/uploads/}")
+    private String uploadDir;
 
     @Override
     public void registerUser(User user) {
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
             throws IOException, UserNotFoundException {
 
         User user = getUserByEmail(email);
-        validateEmail(newEmail);
+        securityValidationImpl.validateEmail(newEmail);
 
         if (!email.equals(newEmail)) {
             userRepository.findByEmail(newEmail).ifPresent(u -> {
@@ -85,8 +85,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Value("${file.upload-dir:src/main/resources/static/uploads/}")
-    private String uploadDir; // Ajoutez ce champ
     private String storeProfileImage(MultipartFile file) throws IOException {
         //String uploadDir = "src/main/resources/static/uploads/";
         Files.createDirectories(Paths.get(uploadDir));
@@ -131,7 +129,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // Validation des règles du nouveau mot de passe
-            validatePassword(newPassword);
+            securityValidationImpl.validatePassword(newPassword);
 
             // Mise à jour du mot de passe
             user.setPassword(passwordEncoder.encode(newPassword));
@@ -145,32 +143,4 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private void validateEmail(String email) {
-        if (!EmailValidator.getInstance().isValid(email)) {
-            throw new IllegalArgumentException("L'email n'est pas valide");
-        }
-    }
-
-    private void validatePassword(String password) throws InvalidPasswordException {
-
-        if (password.length() < 8) {
-            throw new InvalidPasswordException("Le mot de passe doit contenir au moins 8 caractères");
-        }
-
-        if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
-            throw new InvalidPasswordException("Le mot de passe doit contenir au moins un caractère spécial");
-        }
-
-        if (!password.matches(".*\\d.*")) {
-            throw new InvalidPasswordException("Le mot de passe doit contenir au moins un chiffre");
-        }
-
-        if (!password.matches(".*[A-Z].*")) {
-            throw new InvalidPasswordException("Le mot de passe doit contenir au moins une majuscule");
-        }
-
-        if (!password.matches(".*[a-z].*")) {
-            throw new InvalidPasswordException("Le mot de passe doit contenir au moins une minuscule");
-        }
-    }
 }

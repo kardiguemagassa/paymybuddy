@@ -13,7 +13,7 @@ public interface TransactionService {
     Transaction makeTransaction(String senderEmail, String receiverEmail,
                                 double amount, String description, String currency) throws UserNotFoundException, InsufficientBalanceException;
     User getUserWithConnections(String username) throws UserNotFoundException;
-    User addBalance(String email, double amount) throws UserNotFoundException;
+    User addBalance(String email, Double amount, String randomAmount) throws UserNotFoundException;
     User getUserByTransactionEmail(String email) throws UserNotFoundException;
 
 }

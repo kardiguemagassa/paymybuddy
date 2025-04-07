@@ -11,11 +11,11 @@ public interface UserConnectionService {
 
     Set<User> getUserConnections(String userEmail);
     Set<User> getPotentialConnections(String userEmail) throws UserNotFoundException;
-    boolean addConnection(String userEmail, String connectionEmail)
+    void addConnection(String userEmail, String connectionEmail)
             throws UserNotFoundException, ConnectionAlreadyExistsException;
-    boolean updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
+    void updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
             throws UserNotFoundException;
-    boolean removeConnection(String userEmail, String connectionEmail)
+    void removeConnection(String userEmail, String connectionEmail)
             throws UserNotFoundException, ConnectionNotFoundException;
 
 }

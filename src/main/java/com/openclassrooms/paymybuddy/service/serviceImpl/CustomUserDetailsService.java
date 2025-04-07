@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.service;
+package com.openclassrooms.paymybuddy.service.serviceImpl;
 
 import com.openclassrooms.paymybuddy.enttity.User;
 import com.openclassrooms.paymybuddy.repository.UserRepository;

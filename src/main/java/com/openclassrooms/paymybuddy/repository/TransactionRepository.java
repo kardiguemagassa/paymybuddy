@@ -15,5 +15,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t FROM Transaction t WHERE t.sender.email = :email OR t.receiver.email = :email ORDER BY t.createdAt DESC")
     List<Transaction> findAllByUserEmail(@Param("email") String email);
+
     Page<Transaction> findBySenderEmailOrReceiverEmail(String senderEmail, String receiverEmail, Pageable pageable);
 }
