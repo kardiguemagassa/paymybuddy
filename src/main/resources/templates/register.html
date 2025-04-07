@@ -29,22 +29,17 @@
 
                             <div class="box-body bozero mx2p">
 
-                                <!-- Messages erreur -->
-                                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-
-                                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-
-                                <!-- Validation champs -->
-                                <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">
-                                    <ul>
-                                        <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                                <!-- Affichage des autres erreurs -->
+                                <div th:if="${errors}" class="alert alert-danger">
+                                    <ul th:each="entry : ${errors}">
+                                        <li th:each="error : ${entry.value.split(',')}"
+                                            th:text="${error}"></li>
                                     </ul>
                                 </div>
 
-
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('name')} ? 'has-error' : ''">
                                             <input placeholder="Nom d'utilisateur" name="name" th:field="*{name}"
                                                     type="text"
                                                     style="width: 100%"
@@ -55,7 +50,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('email')} ? 'has-error' : ''">
                                             <input placeholder="Email" name="email" th:field="*{email}"
                                                     type="email"
                                                     style="width: 100%"
@@ -66,7 +61,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('password')} ? 'has-error' : ''">
                                             <input min="8" placeholder="Mot de passe" name="password" th:field="*{password}"
                                                     type="password"
                                                     class="form-control pwd"

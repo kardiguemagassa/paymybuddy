@@ -26,6 +26,12 @@
 
                 <h1 class="text-center bold font-weight-bold mb-4">Connexion</h1>
 
+                <div th:if="${successProfile}" class="alert alert-success" th:text="${successProfile}"></div>
+                <div th:if="${successPassword}" class="alert alert-success" th:text="${successPassword}"></div>
+                <div th:if="${errorPassword}" class="alert alert-danger" th:text="${errorPassword}"></div>
+
+
+
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 

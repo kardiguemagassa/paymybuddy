@@ -87,7 +87,6 @@
 
         <form th:action="@{profile/update}" method="post" enctype="multipart/form-data">
 
-            <div th:if="${successProfile}" class="alert alert-success" th:text="${successProfile}"></div>
             <div th:if="${errorProfile}" class="alert alert-danger" th:text="${errorProfile}"></div>
 
             <div class="box-profile">
@@ -139,7 +138,6 @@
 
         <form th:action="@{profile/update-password}" method="post" enctype="multipart/form-data">
 
-            <div th:if="${successPassword}" class="alert alert-success" th:text="${successPassword}"></div>
             <div th:if="${errorPassword}" class="alert alert-danger" th:text="${errorPassword}"></div>
 
             <div class="box-profile">
