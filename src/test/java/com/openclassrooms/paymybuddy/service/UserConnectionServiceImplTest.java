@@ -363,5 +363,4 @@ public class UserConnectionServiceImplTest {
         verify(userRepository, times(1)).findByEmail(targetEmail);
         verify(userRepository, never()).save(any());
     }
-
 }

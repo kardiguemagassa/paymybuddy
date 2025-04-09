@@ -61,3 +61,4 @@ class CustomUserDetailsServiceTest {
         verify(userRepository).findByEmail(email);
     }
 }
+
