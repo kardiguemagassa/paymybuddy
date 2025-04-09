@@ -113,7 +113,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    private double calculateAmountToAdd(Double amount, String randomAmount) {
+    public double calculateAmountToAdd(Double amount, String randomAmount) {
         if (randomAmount != null && randomAmount.equals("random")) {
             double randomValue = 10 + (2000 - 10) * random.nextDouble();
             return Math.round(randomValue * 100.0) / 100.0; // Arrondi à 2 décimales
