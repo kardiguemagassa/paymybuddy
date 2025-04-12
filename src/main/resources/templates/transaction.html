@@ -92,10 +92,10 @@
 
         <div class="balance-display mb-3">
             <h4>Solde actuel:
-<!--                <span th:text="${currencySymbols.get('EUR')} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}"></span>-->
-                <span th:text="${currencySymbols != null && currencySymbols.get('EUR') != null ? currencySymbols.get('EUR') : 'default_value'} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}"></span>
+                <span th:text="${currencySymbols != null && currencySymbols.get('EUR') != null ?
+                    currencySymbols.get('EUR') : 'default_value'} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}">
+                </span>
 
-<!--                <span th:text="${currencySymbols.get('EUR') != null ? currencySymbols.get('EUR') : currencySymbols.get('EUR')} + ' ' + ${#numbers.formatDecimal(currentBalance, 1, 2)}"></span>-->
             </h4>
         </div>
 
