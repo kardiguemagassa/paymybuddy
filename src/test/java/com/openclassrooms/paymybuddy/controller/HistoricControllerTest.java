@@ -43,7 +43,6 @@ import org.springframework.context.annotation.Import;
 @Import({WebSecurityConfig.class, MockSecurityBeansConfig.class, HistoricControllerTestConfig.class})
 public class HistoricControllerTest {
 
-
     @Autowired
     private MockMvc mockMvc;
 

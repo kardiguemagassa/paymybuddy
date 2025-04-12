@@ -17,11 +17,9 @@ public class HomeControllerTest {
 
     @Test
     @WithMockUser
-        // Simuler un utilisateur authentifié
     void testShowHomePage() throws Exception {
-        // Perform the GET request to the "/" URL
         mockMvc.perform(get("/"))
-                .andExpect(status().isOk())  // Expect HTTP 200 status
+                .andExpect(status().isOk())
                 .andExpect(view().name("index"));  // Expect the view name to be "index"
     }
 }

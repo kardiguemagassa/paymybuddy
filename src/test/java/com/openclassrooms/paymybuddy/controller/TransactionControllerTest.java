@@ -27,9 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,7 +41,6 @@ public class TransactionControllerTest {
     private MockMvc mockMvc;
     @Autowired
     private TransactionServiceImpl transactionService;
-
 
     @WithMockUser(username = "john@gmail.com", roles = "USER")
     @Test
@@ -71,7 +68,6 @@ public class TransactionControllerTest {
                 .andExpect(view().name("transaction"))
                 .andExpect(model().attributeExists("transactions"));
     }
-
 
     @WithMockUser(username = "sender@gmail.com", roles = "USER")
     @Test

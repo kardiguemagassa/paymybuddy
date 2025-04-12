@@ -20,7 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -36,7 +36,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 @AutoConfigureMockMvc(addFilters = false)
 @Import({WebSecurityConfig.class, MockSecurityBeansConfig.class,ProfileControllerTestConfig.class})
 public class ProfileControllerTest {
-
 
     @Autowired
     private MockMvc mockMvc;
@@ -81,7 +80,7 @@ public class ProfileControllerTest {
         mockMvc.perform(get("/profile"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"))
-                .andExpect(result -> assertTrue(result.getResolvedException() instanceof UserNotFoundException));
+                .andExpect(result -> assertInstanceOf(UserNotFoundException.class, result.getResolvedException()));
     }
 
     @Test

@@ -22,10 +22,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import org.springframework.validation.BindingResult;
 import org.springframework.web.context.WebApplicationContext;
-
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -38,8 +36,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -60,7 +56,7 @@ public class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Réinitialisation des mocks à un état propre avant chaque test
+
         reset(userService, userValidator);
         doNothing().when(userValidator).validate(any(), any());
         when(userValidator.supports(User.class)).thenReturn(true);
@@ -181,7 +177,7 @@ public class UserControllerTest {
 
     @Test
     void logout_WhenNotAuthenticated_ShouldStillRedirect() throws Exception {
-        // S'assurer qu'aucune authentification n'est active
+        // qu'aucune authentification n'est active
         SecurityContextHolder.clearContext();
 
         mockMvc.perform(post("/logout").with(csrf()))

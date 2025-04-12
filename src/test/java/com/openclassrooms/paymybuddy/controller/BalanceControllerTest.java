@@ -13,7 +13,6 @@ import com.openclassrooms.paymybuddy.service.serviceImpl.TransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,40 +36,36 @@ public class BalanceControllerTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
-
-        // Initialiser un utilisateur mocké pour le test
         mockUser = new User();
-        mockUser.setEmail("test@mail.com");
+        mockUser.setEmail("john@gmail.com");
         mockUser.setBalance(100.0);
     }
 
     @Test
-    @WithMockUser(username = "test@mail.com", roles = "USER")
+    @WithMockUser(username = "john@gmail.com", roles = "USER")
     void showAddBalancePage_ShouldReturnBalancePage_WhenUserIsAuthenticated() throws Exception {
-        // Mock du service pour renvoyer un utilisateur
-        when(transactionService.getUserByTransactionEmail("test@mail.com")).thenReturn(mockUser);
 
-        // Tester le GET sur /addBalance
+        when(transactionService.getUserByTransactionEmail("john@gmail.com")).thenReturn(mockUser);
+
         mockMvc.perform(MockMvcRequestBuilders.get("/addBalance"))
-                .andExpect(status().isOk()) // Vérifie que la page se charge correctement
-                .andExpect(view().name("balance")) // Vérifie que la vue rendue est "balance"
+                .andExpect(status().isOk())
+                .andExpect(view().name("balance"))
                 .andExpect(model().attributeExists("user", "currentBalance")) // Vérifie que les attributs sont bien présents dans le modèle
                 .andExpect(model().attribute("user", mockUser))
                 .andExpect(model().attribute("currentBalance", 100.0)); // Vérifie que le solde est correct
     }
 
     @Test
-    @WithMockUser(username = "test@mail.com", roles = "USER")
+    @WithMockUser(username = "john@gmail.com", roles = "USER")
     void addBalance_ShouldRedirectToBalancePage_WhenBalanceIsAdded() throws Exception {
         double amountToAdd = 50.0;
         String successMessage = "Votre solde a été mis à jour de " + amountToAdd + "€.";
 
         // Mock de l'ajout de solde et du message de succès
-        when(transactionService.addBalance("test@mail.com", amountToAdd, null)).thenReturn(mockUser);
+        when(transactionService.addBalance("john@gmail.com", amountToAdd, null)).thenReturn(mockUser);
         when(transactionService.getFormattedBalanceUpdateMessage(mockUser, amountToAdd)).thenReturn(successMessage);
 
-        // Tester le POST sur /addBalance avec un montant
+        // avec un montant
         mockMvc.perform(MockMvcRequestBuilders.post("/addBalance")
                         .param("amount", String.valueOf(amountToAdd)))
                 .andExpect(status().is3xxRedirection()) // Vérifie la redirection
@@ -78,21 +73,20 @@ public class BalanceControllerTest {
 
     }
 
-
     @Test
-    @WithMockUser(username = "test@mail.com", roles = "USER")
+    @WithMockUser(username = "john@gmail.com", roles = "USER")
     void addBalance_ShouldRedirectToBalancePage_WhenRandomAmountIsAdded() throws Exception {
         String randomAmount = "randomAmount"; // Mock un randomAmount pour la validation
         String successMessage = "Votre solde a été mis à jour.";
 
-        // Mock du service pour l'ajout de solde avec randomAmount
-        when(transactionService.addBalance("test@mail.com", null, randomAmount)).thenReturn(mockUser);
+        // avec randomAmount
+        when(transactionService.addBalance("john@gmail.com", null, randomAmount)).thenReturn(mockUser);
         when(transactionService.getFormattedBalanceUpdateMessage(mockUser, null)).thenReturn(successMessage);
 
-        // Tester le POST sur /addBalance avec randomAmount
+        // randomAmount
         mockMvc.perform(MockMvcRequestBuilders.post("/addBalance")
                         .param("randomAmount", randomAmount))
-                .andExpect(status().is3xxRedirection()) // Vérifie la redirection
+                .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("/addBalance?success*")); // Vérifie que l'URL de redirection est correcte
     }
 }
