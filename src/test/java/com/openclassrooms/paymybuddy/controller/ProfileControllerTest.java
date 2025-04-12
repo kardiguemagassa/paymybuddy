@@ -5,8 +5,8 @@ import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.*;
 import com.openclassrooms.paymybuddy.service.UserService;
 import com.openclassrooms.paymybuddy.service.serviceImpl.SecurityValidationImpl;
-import com.openclassrooms.paymybuddy.testconfig.MockSecurityBeansConfig;
-import com.openclassrooms.paymybuddy.testconfig.ProfileControllerTestConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.MockSecurityBeansConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.ProfileControllerTestConfig;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

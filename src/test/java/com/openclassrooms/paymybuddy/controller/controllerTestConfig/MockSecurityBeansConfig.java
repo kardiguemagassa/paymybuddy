@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.testconfig;
+package com.openclassrooms.paymybuddy.controller.controllerTestConfig;
 
 import com.openclassrooms.paymybuddy.config.CustomAuthenticationSuccessHandler;
 import com.openclassrooms.paymybuddy.service.serviceImpl.CustomUserDetailsService;
@@ -10,14 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
-import org.thymeleaf.spring6.view.ThymeleafViewResolver;
-
 import java.io.IOException;
 import java.util.Collections;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;

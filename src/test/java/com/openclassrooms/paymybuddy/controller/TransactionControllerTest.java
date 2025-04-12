@@ -9,9 +9,9 @@ import com.openclassrooms.paymybuddy.config.WebSecurityConfig;
 import com.openclassrooms.paymybuddy.entity.Transaction;
 import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.service.serviceImpl.TransactionServiceImpl;
-import com.openclassrooms.paymybuddy.testconfig.MockSecurityBeansConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.MockSecurityBeansConfig;
 
-import com.openclassrooms.paymybuddy.testconfig.TransactionControllerTestConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.TransactionControllerTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

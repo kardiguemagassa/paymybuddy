@@ -28,8 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.openclassrooms.paymybuddy.config.WebSecurityConfig;
 
-import com.openclassrooms.paymybuddy.testconfig.HistoricControllerTestConfig;
-import com.openclassrooms.paymybuddy.testconfig.MockSecurityBeansConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.HistoricControllerTestConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.MockSecurityBeansConfig;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;

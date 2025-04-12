@@ -3,8 +3,8 @@ package com.openclassrooms.paymybuddy.controller;
 import com.openclassrooms.paymybuddy.config.WebSecurityConfig;
 import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.service.serviceImpl.UserServiceImpl;
-import com.openclassrooms.paymybuddy.testconfig.MockSecurityBeansConfig;
-import com.openclassrooms.paymybuddy.testconfig.UserControllerTestConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.MockSecurityBeansConfig;
+import com.openclassrooms.paymybuddy.controller.controllerTestConfig.UserControllerTestConfig;
 import com.openclassrooms.paymybuddy.validator.UserValidator;
 
 import org.junit.jupiter.api.BeforeEach;

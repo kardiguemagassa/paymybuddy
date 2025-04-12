@@ -1,4 +1,4 @@
-package com.openclassrooms.paymybuddy.testconfig;
+package com.openclassrooms.paymybuddy.controller.controllerTestConfig;
 
 import com.openclassrooms.paymybuddy.service.serviceImpl.HistoricServiceImpl;
 import org.mockito.Mockito;
