@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -40,9 +39,6 @@ class TransactionServiceImplTest {
 
     @Mock
     private SecurityValidationImpl securityValidation;
-
-    @Mock
-    private Random random;
 
     @Mock
     private Page<Transaction> transactionPage;
