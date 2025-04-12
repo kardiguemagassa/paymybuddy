@@ -4,7 +4,7 @@ public class SecurityConstant {
     public static final String[] PUBLIC_URLS = {
             "/",
             "/index/**",
-            "/register/**",
+            "/register","/register/**",
             "/login/**",
             "/error",
             "/resources/**",
@@ -12,5 +12,12 @@ public class SecurityConstant {
             "/css/**",
             "/webjars/**",
             "/js/**"
+    };
+
+    public static final String[] PRIVATE_URL = {
+            "/transactions/**",
+            "/profile/**",
+            "/addRelationship/**",
+            "/historic/**"
     };
 }
