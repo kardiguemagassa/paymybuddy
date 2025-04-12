@@ -1,7 +1,7 @@
 package com.openclassrooms.paymybuddy.service.serviceImpl;
 
-import com.openclassrooms.paymybuddy.enttity.Historic;
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.Historic;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.repository.HistoricRepository;
 import com.openclassrooms.paymybuddy.repository.UserRepository;
 import com.openclassrooms.paymybuddy.service.HistoricService;

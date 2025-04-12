@@ -1,7 +1,7 @@
 package com.openclassrooms.paymybuddy.service;
 
-import com.openclassrooms.paymybuddy.enttity.Historic;
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.Historic;
+import com.openclassrooms.paymybuddy.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

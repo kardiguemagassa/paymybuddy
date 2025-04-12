@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.validator;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -8,6 +8,7 @@ import org.springframework.validation.Validator;
 
 @Component
 public class UserValidator implements Validator {
+
     @Override
     public boolean supports(Class<?> clazz) {
         return User.class.isAssignableFrom(clazz);
@@ -15,7 +16,10 @@ public class UserValidator implements Validator {
 
     @Override
     public void validate(Object target, Errors errors) {
-        User user = (User) target;
+
+        if(!(target instanceof User user)) {
+            return;
+        }
 
         if (user.getName() != null && user.getName().equalsIgnoreCase("admin")) {
             errors.rejectValue("name", "forbidden.name", "Ce nom d'utilisateur n'est pas autorisé");

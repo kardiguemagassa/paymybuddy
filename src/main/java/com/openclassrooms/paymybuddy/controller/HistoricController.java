@@ -1,8 +1,8 @@
 package com.openclassrooms.paymybuddy.controller;
 
-import com.openclassrooms.paymybuddy.enttity.Historic;
-import com.openclassrooms.paymybuddy.enttity.User;
-import com.openclassrooms.paymybuddy.service.HistoricService;
+import com.openclassrooms.paymybuddy.entity.Historic;
+import com.openclassrooms.paymybuddy.entity.User;
+import com.openclassrooms.paymybuddy.service.serviceImpl.HistoricServiceImpl;
 import com.openclassrooms.utils.CurrencySymbols;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +21,7 @@ import org.springframework.data.domain.Pageable;
 @RequestMapping("/historic")
 public class HistoricController {
 
-    private final HistoricService historicService;
+    private final HistoricServiceImpl historicService;
 
     @GetMapping()
     public String showHistoric(@AuthenticationPrincipal UserDetails userDetails, Model model,

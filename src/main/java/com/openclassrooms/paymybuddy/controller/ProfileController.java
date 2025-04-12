@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.controller;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.*;
 import com.openclassrooms.paymybuddy.service.UserService;
 import com.openclassrooms.paymybuddy.service.serviceImpl.SecurityValidationImpl;

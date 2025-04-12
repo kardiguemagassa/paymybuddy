@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.service.serviceImpl;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.InsufficientBalanceException;
 import com.openclassrooms.paymybuddy.exception.InvalidPasswordException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SecurityValidationImpl {
+public class SecurityValidationImpl  {
 
     private static final double FEE_PERCENTAGE = 0.005;
     private final CurrencyServiceImpl currencyService;

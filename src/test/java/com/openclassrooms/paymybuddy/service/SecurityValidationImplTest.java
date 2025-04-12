@@ -6,7 +6,7 @@ import com.openclassrooms.paymybuddy.service.serviceImpl.SecurityValidationImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.InsufficientBalanceException;
 import com.openclassrooms.paymybuddy.exception.InvalidPasswordException;
 import jakarta.servlet.http.HttpServletRequest;

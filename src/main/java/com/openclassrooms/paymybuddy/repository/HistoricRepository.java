@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.repository;
 
-import com.openclassrooms.paymybuddy.enttity.Historic;
+import com.openclassrooms.paymybuddy.entity.Historic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

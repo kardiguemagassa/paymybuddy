@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.service;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.EmailExistsException;
 import com.openclassrooms.paymybuddy.exception.InvalidPasswordException;
 import com.openclassrooms.paymybuddy.exception.PasswordMismatchException;

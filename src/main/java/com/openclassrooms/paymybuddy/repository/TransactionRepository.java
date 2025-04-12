@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.repository;
 
-import com.openclassrooms.paymybuddy.enttity.Transaction;
+import com.openclassrooms.paymybuddy.entity.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

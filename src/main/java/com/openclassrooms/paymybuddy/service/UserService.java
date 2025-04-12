@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.service;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;

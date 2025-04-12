@@ -1,7 +1,7 @@
 package com.openclassrooms.paymybuddy.service.serviceImpl;
 
-import com.openclassrooms.paymybuddy.enttity.Transaction;
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.Transaction;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.InsufficientBalanceException;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
 import com.openclassrooms.paymybuddy.repository.TransactionRepository;

@@ -1,6 +1,6 @@
 package com.openclassrooms.paymybuddy.service;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.ConnectionAlreadyExistsException;
 import com.openclassrooms.paymybuddy.exception.ConnectionNotFoundException;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;

@@ -92,9 +92,14 @@
 
         <div class="balance-display mb-3">
             <h4>Solde actuel:
-                <span th:text="${currencySymbols.get('EUR')} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}"></span>
+<!--                <span th:text="${currencySymbols.get('EUR')} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}"></span>-->
+                <span th:text="${currencySymbols != null && currencySymbols.get('EUR') != null ? currencySymbols.get('EUR') : 'default_value'} + ' ' + ${#numbers.formatDecimal(currentBalance,1,2)}"></span>
+
+<!--                <span th:text="${currencySymbols.get('EUR') != null ? currencySymbols.get('EUR') : currencySymbols.get('EUR')} + ' ' + ${#numbers.formatDecimal(currentBalance, 1, 2)}"></span>-->
             </h4>
         </div>
+
+        <p th:text="${currencySymbols}"></p>
 
         <form th:action="@{/transaction}" method="post">
             <div class="box-transfer">
@@ -170,13 +175,13 @@
             </thead>
             <tbody>
             <tr th:each="transaction : ${transactions.content}">
-                <td th:text="${transaction.receiver.name}"></td>
-                <td th:text="${transaction.description}"></td>
+                <td th:text="${transaction.receiver != null ? transaction.receiver.name : 'N/A'}"></td>
+                <td th:text="${transaction.description != null ? transaction.description : 'Aucune description'}"></td>
 
-                <td th:text="${currencySymbols.get(transaction.currency)} + ' ' + ${#numbers.formatDecimal(transaction.amount, 1, 2)}"></td>
-                <td th:text="${currencySymbols.get(transaction.currency)} + ' ' + ${#numbers.formatDecimal(transaction.fee, 1, 2)}"></td>
+                <td th:text="${transaction.currency != null ? currencySymbols.get(transaction.currency) + ' ' + #numbers.formatDecimal(transaction.amount, 1, 2) : '0.00'}"></td>
+                <td th:text="${transaction.currency != null ? currencySymbols.get(transaction.currency) + ' ' + #numbers.formatDecimal(transaction.fee, 1, 2) : '0.00'}"></td>
 
-                <td th:text="${#temporals.format(transaction.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${transaction.createdAt != null ? #temporals.format(transaction.createdAt, 'dd/MM/yyyy HH:mm') : 'Date inconnue'}"></td>
             </tr>
             </tbody>
         </table>

@@ -14,7 +14,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import static com.openclassrooms.paymybuddy.constant.SecurityConstant.*;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+
 
 @Configuration
 @EnableWebSecurity
@@ -31,11 +32,27 @@ public class WebSecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        //.requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/index/**",
+                                "/register","/register/**",
+                                "/login/**",
+                                "/error",
+                                "/resources/**",
+                                "/assets/**",
+                                "/css/**",
+                                "/webjars/**",
+                                "/js/**"
+                               ).permitAll()
+
+
+
                         .requestMatchers(
                                 "/transactions/**",
                                 "/profile/**",
-                                "/addRelationship/**"
+                                "/addRelationship/**",
+                                "/historic/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
@@ -45,6 +62,10 @@ public class WebSecurityConfig {
                         .permitAll()
                         .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl("/profile", true)
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                        .accessDeniedPage("/error")
                 )
 
                 .logout(logout -> logout

@@ -1,7 +1,7 @@
 package com.openclassrooms.paymybuddy.controller;
 
-import com.openclassrooms.paymybuddy.enttity.Transaction;
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.Transaction;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
 import com.openclassrooms.paymybuddy.service.serviceImpl.TransactionServiceImpl;
 import com.openclassrooms.utils.CurrencySymbols;
@@ -63,12 +63,6 @@ public class TransactionController {
         return "transaction";
     }
 
-    @GetMapping("/transactions")
-    public String getTransactions(@AuthenticationPrincipal UserDetails userDetails, Model model) throws UserNotFoundException {
-        User user = transactionService.getUserWithConnections(userDetails.getUsername());
-        model.addAttribute("user", user);
-        return "transaction";
-    }
 
     @PostMapping
     public String makeTransaction(

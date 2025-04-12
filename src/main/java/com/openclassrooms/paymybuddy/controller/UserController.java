@@ -1,12 +1,13 @@
 package com.openclassrooms.paymybuddy.controller;
 
-import com.openclassrooms.paymybuddy.enttity.User;
+import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.service.serviceImpl.UserServiceImpl;
 import com.openclassrooms.paymybuddy.validator.UserValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -22,6 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 @RequestMapping
 @Validated
+@Slf4j
 public class UserController {
 
     private final UserServiceImpl userService;
@@ -56,6 +58,7 @@ public class UserController {
         }
 
         userService.registerUser(user);
+        log.info("user enregistré : {}", user);
         redirectAttributes.addFlashAttribute("success", "Inscription réussie !");
         return "redirect:/login";
     }
