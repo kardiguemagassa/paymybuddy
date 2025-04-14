@@ -16,8 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import static com.openclassrooms.paymybuddy.constant.SecurityConstant.PRIVATE_URL;
-import static com.openclassrooms.paymybuddy.constant.SecurityConstant.PUBLIC_URLS;
+import static com.openclassrooms.paymybuddy.constant.SecurityConstant.*;
 
 
 @Configuration
@@ -37,7 +36,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(PUBLIC_URLS).permitAll()
 
-                        .requestMatchers(PRIVATE_URL).authenticated().anyRequest().authenticated()
+                        .requestMatchers(PRIVATE_URLS).authenticated().anyRequest().authenticated()
                 )
 
                 .formLogin(form -> form

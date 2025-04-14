@@ -14,7 +14,7 @@ public class SecurityConstant {
             "/js/**"
     };
 
-    public static final String[] PRIVATE_URL = {
+    public static final String[] PRIVATE_URLS = {
             "/transactions/**",
             "/profile/**",
             "/addRelationship/**",
