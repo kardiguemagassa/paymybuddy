@@ -152,6 +152,9 @@ public class GlobalExceptionHandler {
         if (referer != null && referer.contains("/addBalance")) {
             redirectAttributes.addFlashAttribute("errorBalance", "Utilisateur non trouvé: " + e.getMessage());
             return "redirect:/addBalance";
+        } else if (referer != null && referer.contains("/transaction")) {
+            redirectAttributes.addFlashAttribute("errorTransaction", e.getMessage());
+            return "redirect:/transaction";
         }
 
         redirectAttributes.addFlashAttribute("errorPassword", "Session expirée");

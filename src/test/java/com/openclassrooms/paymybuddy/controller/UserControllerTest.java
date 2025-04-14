@@ -91,7 +91,8 @@ public class UserControllerTest {
                         .param("email", "johnexisting@gmail.com")
                         .param("password", "John@123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/register"));
+                .andExpect(redirectedUrl("/register"))
+                .andExpect(flash().attributeExists("org.springframework.validation.BindingResult.user"));
     }
 
     @Test

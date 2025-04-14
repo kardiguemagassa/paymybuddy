@@ -46,13 +46,15 @@ public class UserController {
     public String registerUser(@Valid @ModelAttribute("user") User user, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.user", bindingResult);
+            log.warn("Validation échouée : {}", bindingResult.getAllErrors());
             redirectAttributes.addFlashAttribute("user", user);
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.user", bindingResult);
             return "redirect:/register";
         }
 
         if (userService.findUserByEmail(user.getEmail()).isPresent()) {
             bindingResult.rejectValue("email", "email.exists", "Cet email est déjà utilisé");
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.user", bindingResult);
             redirectAttributes.addFlashAttribute("user", user);
             return "redirect:/register";
         }
