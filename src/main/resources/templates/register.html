@@ -26,24 +26,21 @@
 
                     <div class="myForm">
                         <form th:action="@{/register}" th:object="${user}" method="post">
+
                             <div class="box-body bozero mx2p">
 
-                                <!-- Error message display -->
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <div th:if="${error}" class="alert alert-danger" role="alert">
-                                                <p th:text="${error}"></p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- Affichage des autres erreurs -->
+                                <div th:if="${errors}" class="alert alert-danger">
+                                    <ul th:each="entry : ${errors}">
+                                        <li th:each="error : ${entry.value.split(',')}"
+                                            th:text="${error}"></li>
+                                    </ul>
                                 </div>
-                                <!-- End error message display -->
 
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
-                                            <input placeholder="Nom d'utilisateur" name="username" th:field="*{username}"
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('name')} ? 'has-error' : ''">
+                                            <input placeholder="Nom d'utilisateur" name="name" th:field="*{name}"
                                                     type="text"
                                                     style="width: 100%"
                                                     class="form-control"
@@ -53,7 +50,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('email')} ? 'has-error' : ''">
                                             <input placeholder="Email" name="email" th:field="*{email}"
                                                     type="email"
                                                     style="width: 100%"
@@ -64,7 +61,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="form-group">
+                                        <div class="form-group" th:classappend="${#fields.hasErrors('password')} ? 'has-error' : ''">
                                             <input min="8" placeholder="Mot de passe" name="password" th:field="*{password}"
                                                     type="password"
                                                     class="form-control pwd"
@@ -88,8 +85,5 @@
     </div>
 </section>
 </body>
-
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 
 </html>

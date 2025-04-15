@@ -26,6 +26,15 @@
 
                 <h1 class="text-center bold font-weight-bold mb-4">Connexion</h1>
 
+                <div th:if="${successProfile}" class="alert alert-success" th:text="${successProfile}"></div>
+                <div th:if="${successPassword}" class="alert alert-success" th:text="${successPassword}"></div>
+                <div th:if="${errorPassword}" class="alert alert-danger" th:text="${errorPassword}"></div>
+
+
+
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
                 <div class="form-group">
                     <input placeholder="Email" name="username" field="{email}" type="email" class="form-control" required />
                 </div>
@@ -35,8 +44,9 @@
                 </div>
 
                 <div class="clearfix mb-4">
-                    <label class="float-left form-check-label"><input type="checkbox" /> Mot de passe oublié?</label>
-                    <a href="#" class="color-text float-right">Cliquez ici</a>
+                    <label class="float-left form-check-label"><input type="checkbox" /> Revenir à l'accueil?</label>
+                    <a href="#" class="color-text float-right" th:href="@{/}"> Accueil Cliquez ici</a>
+
                 </div>
                 <div class="form-group">
                     <button type="submit" class="myBtn">Se connecter</button>
@@ -53,8 +63,6 @@
     </div>
 </div>
 </body>
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
-<!--<script type="text/javascript" th:src="@{/js/main.js}"></script>-->
+
+<script type="text/javascript" th:src="@{/js/main.js}"></script>
 </html>

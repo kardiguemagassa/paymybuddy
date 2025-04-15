@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8"/>
@@ -40,28 +39,41 @@
         <ul class="navbar-nav m-auto mt-2 mt-lg-0">
 
             <li class="nav-item ">
-                <a class="nav-link" th:href="@{transaction}"><i class="fa-solid fa-eye"></i>Transférer</a>
-            </li>
-            <li class="nav-item ">
-                <a class="nav-link" th:href="@{profile}"><i class="fa-duotone fa-solid fa-user"></i> Profil</a>
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{profile}">
+                    <i class="fa-solid fa-pencil"></i> Profil</a>
             </li>
 
             <li class="nav-item ">
-                <a class="nav-link" th:href="@{addRelationship}"><i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addRelationship}">
+                    <i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addBalance}">
+                    <i class="fas fa-money-bill-wave"></i> Recharger</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
+                    <i class="fa-solid fa-eye"></i>Transférer</a>
+            </li>
+
+            <li class="nav-item">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{/historic}">
+                    <i class="fas fa-history"></i> Historique
+                </a>
             </li>
 
         </ul>
 
-         image profile
-        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.username!=null}" th:src="@{${user?.getProfileImageUrl()}}"/>
+        image profile
+        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.name!=null}"
+             th:src="@{${user?.getProfileImageUrl()}}"/>
 
-        <label th:if="${user.username != null && user.email != null}"
-               th:text="${user.username+' '+user.email}"
+        <label th:if="${user.name != null && user.email != null}"
+               th:text="${user.name}"
                class="nav-item nav-link px-2 me-3">
         </label>
-
-        <label th:unless="${user.username != null && user.email != null}" th:text="${username}"
-               class="nav-item nav-link px-2 me-3"></label>
 
         <button class="myBtn-light me-5" onclick="window.location.href='/logout'">Se déconnecter</button>
     </div>
@@ -72,13 +84,19 @@
     <div class="sidenav px-5"></div>
 
     <div class="myForm-profile">
-        <form th:action="@{/register}" th:object="${user}" method="post" enctype="multipart/form-data">
-            <div class="box-profile">
 
+        <form th:action="@{profile/update}" method="post" enctype="multipart/form-data">
+
+            <div th:if="${errorProfile}" class="alert alert-danger" th:text="${errorProfile}"></div>
+
+            <div class="box-profile">
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-profile-group">
-                            <input class="form-control-profile" placeholder="Nom d'utilisateur" name="username" th:field="*{username}"
+                            <label>Nom d'utilisateur</label>
+                            <input class="form-control-profile"
+                                   th:value="${user.name}"
+                                   name="newUsername"
                                    type="text"
                                    required />
                         </div>
@@ -87,18 +105,23 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-profile-group">
-                            <input class="form-control-profile" placeholder="Email" name="email" th:field="*{email}"
+                            <label>Email</label>
+                            <input class="form-control-profile"
+                                   th:value="${user.email}"
+                                   name="newEmail"
                                    type="email"
-                                   required/>
+                                   required />
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-profile-group">
-                            <input class="form-control-profile pwd" min="8" placeholder="Mot de passe" name="password" th:field="*{password}"
-                                   type="password"
-                                   required />
+                            <label>Photo de profil</label>
+                            <input class="form-control-profile"
+                                   name="profileImage"
+                                   type="file"
+                                   accept="image/*" />
                         </div>
                     </div>
                 </div>
@@ -110,12 +133,59 @@
                     </div>
                 </div>
             </div>
+
+        </form>
+
+        <form th:action="@{profile/update-password}" method="post" enctype="multipart/form-data">
+
+            <div th:if="${errorPassword}" class="alert alert-danger" th:text="${errorPassword}"></div>
+
+            <div class="box-profile">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-profile-group">
+                            <label>Mot de passe actuel</label>
+                            <input class="form-control-profile"
+                                   name="currentPassword"
+                                   type="password"
+                                   required/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-profile-group">
+                            <label>Nouveau mot de passe</label>
+                            <input class="form-control-profile"
+                                   name="newPassword"
+                                   type="password"
+                                   required/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-profile-group">
+                            <label>Confirmer le nouveau mot de passe</label>
+                            <input class="form-control-profile"
+                                   name="confirmPassword"
+                                   type="password"
+                                   required/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="box-footer">
+                <div class="row">
+                    <div class="form-group mt-5 col-md-12">
+                        <button type="submit" class="myBtn py-3">Changer le mot de passe</button>
+                    </div>
+                </div>
+            </div>
+
         </form>
     </div>
 </section>
-
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 
 </body>
 </html>

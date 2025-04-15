@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8"/>
@@ -40,12 +39,8 @@
         <ul class="navbar-nav m-auto mt-2 mt-lg-0">
 
             <li class="nav-item ">
-                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
-                    <i class="fa-solid fa-eye"></i>Transférer</a>
-            </li>
-            <li class="nav-item ">
                 <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{profile}">
-                    <i class="fa-duotone fa-solid fa-user"></i> Profil</a>
+                    <i class="fa-solid fa-pencil"></i> Profil</a>
             </li>
 
             <li class="nav-item ">
@@ -53,18 +48,31 @@
                     <i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
             </li>
 
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addBalance}">
+                    <i class="fas fa-money-bill-wave"></i> Recharger</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
+                    <i class="fa-solid fa-eye"></i>Transférer</a>
+            </li>
+
+            <li class="nav-item">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{/historic}">
+                    <i class="fas fa-history"></i> Historique
+                </a>
+            </li>
+
         </ul>
 
-<!--        image profile-->
-<!--        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.username!=null}" th:src="@{${user?.getProfileImageUrl()}}"/>-->
+        image profile
+        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.name!=null}" th:src="@{${user?.getProfileImageUrl()}}"/>
 
-<!--        <label th:if="${user.username != null && user.email != null}"-->
-<!--               th:text="${user.username+' '+user.email}"-->
-<!--               class="nav-item nav-link px-2 me-3">-->
-<!--        </label>-->
-
-<!--        <label th:unless="${user.username != null && user.email != null}" th:text="${username}"-->
-<!--               class="nav-item nav-link px-2 me-3"></label>-->
+        <label th:if="${user.name != null && user.email != null}"
+               th:text="${user.name}"
+               class="nav-item nav-link px-2 me-3">
+        </label>
 
 
         <button class="myBtn-light me-5" onclick="window.location.href='/logout'">Se déconnecter</button>
@@ -78,14 +86,14 @@
 
     <div class="myForm-add">
 
-        <form th:action="@{/addRelationship/addRelation}" method="post">
+        <form th:action="@{/addRelationship/add}" method="post">
             <div class="box-profile">
 
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
-                            <div th:if="${successMessage}" class="alert alert-success" role="alert">
-                                <p th:text="${successMessage}"></p>
+                            <div th:if="${relationSuccessMessage}" class="alert alert-success" role="alert">
+                                <p th:text="${relationSuccessMessage}"></p>
                             </div>
                         </div>
                     </div>
@@ -107,7 +115,7 @@
                             <label>Chercher une ralion</label>
                             <input class="form-control-profile" placeholder="Saisir une addresse e-mail" name="email"
                                    type="email"
-                                   required/>
+                                   required th:value="${email}"/>
                         </div>
                     </div>
                 </div>
@@ -126,12 +134,45 @@
             <tr>
                 <th>Nom</th>
                 <th>Email</th>
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody>
+            <tr th:if="${#sets.isEmpty(relations)}">
+                <td colspan="3">Vous n'avez pas encore de relations.</td>
+            </tr>
             <tr th:each="relation : ${relations}">
-                <td th:text="${relation.username}"></td>
+                <td th:text="${relation.name}"></td>
                 <td th:text="${relation.email}"></td>
+                <td>
+                    <!-- Bouton Supprimer -->
+                    <form th:action="@{/addRelationship/remove}"
+                          method="post"
+                          style="display: inline-block; margin-right: 10px;"
+                          onsubmit="return confirm('Voulez-vous vraiment supprimer cette relation ?');">
+                        <input type="hidden" name="targetEmail" th:value="${relation.email}">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </form>
+
+                    <!-- Formulaire de Modification -->
+                    <form th:action="@{/addRelationship/update}" method="post" style="display: inline-block;">
+                        <input type="hidden" name="oldConnectionEmail" th:value="${relation.email}">
+
+                        <div class="input-group" style="width: 250px;">
+                            <input type="email" name="newConnectionEmail"
+                                   class="form-control form-control-sm " style="padding: 0.2px; border-radius: 3px;"
+                                   placeholder="Nouvel email" required
+                                   pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+                            <div class="input-group-append" style="margin: auto 5px">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit" ></i> Modifier
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -139,9 +180,6 @@
     </div>
 
 </section>
-
-<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 
 </body>
 </html>

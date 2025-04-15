@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Historique des transactions</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/styles.css}"/>
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css} "/>
+    <link th:rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.css}"/>
+
+</head>
+
+<body>
+
+<header class="navbar navbar-expand-lg navbar-dark">
+
+    <label class="mt-2 ms-5 font-weight-bold h5">
+        <a th:href="@{/profile/}">Pay My Buddy</a><span class="logo_com font-weight-bold h5"
+                                                        style="color: white">.com</span>
+    </label>
+    <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarTogglerDemo02"
+            aria-controls="navbarTogglerDemo02"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+    >
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarToggler">
+        <ul class="navbar-nav m-auto mt-2 mt-lg-0">
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{profile}">
+                    <i class="fa-solid fa-pencil"></i> Profil</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addRelationship}">
+                    <i class="fa-duotone fa-solid fa-user-tie"></i>Ajouter relation</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{addBalance}">
+                    <i class="fas fa-money-bill-wave"></i> Recharger</a>
+            </li>
+
+            <li class="nav-item ">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{transaction}">
+                    <i class="fa-solid fa-eye"></i>Transférer</a>
+            </li>
+
+            <li class="nav-item">
+                <a sec:authorize="isAuthenticated()" class="nav-link" th:href="@{/historic}">
+                    <i class="fas fa-history"></i> Historique
+                </a>
+            </li>
+
+        </ul>
+
+        image profile
+        <img class="rounded-circle me-3" height="50px" width="50x" th:if="${user.name!=null}"
+             th:src="@{${user?.getProfileImageUrl()}}"/>
+
+        <label th:if="${user.name != null && user.email != null}"
+               th:text="${user.name}"
+               class="nav-item nav-link px-2 me-3">
+        </label>
+
+        <button class="myBtn-light me-5" onclick="window.location.href='/logout'">Se déconnecter</button>
+    </div>
+</header>
+
+<section class="section">
+    <div class="sidenav px-5"></div>
+
+    <div class="container historic">
+        <h2>Historique des transactions</h2>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Contact</th>
+                <th>Description</th>
+                <th>Montant</th>
+                <th>Frais</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- historics.content -->
+            <tr th:each="historic : ${historics.content}">
+
+                <td th:text="${historic?.executionDate != null} ? ${#temporals.format(historic.executionDate, 'dd/MM/yyyy HH:mm')} : ''"></td>
+                <td>
+                    <span th:if="${historic?.senderId == userId}">Débit</span>
+                    <span th:if="${historic?.receiverId == userId}">Crédit</span>
+                </td>
+                <td>
+                    <span th:if="${historic?.senderId == userId}"
+                          th:text="${historic?.receiverProfileName}"></span>
+                    <span th:if="${historic?.receiverId == userId}"
+                          th:text="${historic?.senderProfileName}"></span>
+                </td>
+                <td th:text="${historic?.description}"></td>
+
+
+                <td th:text="${historic?.amount != null} ?
+                    ${#numbers.formatDecimal(historic.amount, 1, 2)} + ' ' +
+                    (${currencySymbols.get(historic.currency)} ?: historic.currency) : ''"></td>
+
+                <td th:text="${historic?.fee != null} ?
+                    ${#numbers.formatDecimal(historic.fee, 1, 2)} + ' ' +
+                    (${currencySymbols.get(historic.currency)} ?: historic.currency) : ''"></td>
+
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div th:if="${historics.totalPages > 1}" class="pagination">
+            <span th:each="page : ${#numbers.sequence(1, historics.totalPages)}">
+                <a th:href="@{/historic(page=${page-1},size=${historics.size})}"
+                   th:text="${page}"
+                   th:class="${page-1 == historics.number} ? 'active'"></a>
+            </span>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

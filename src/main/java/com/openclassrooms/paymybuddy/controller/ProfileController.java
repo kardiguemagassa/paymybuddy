@@ -1,66 +1,62 @@
 package com.openclassrooms.paymybuddy.controller;
 
-import com.openclassrooms.paymybuddy.enttity.User;
-import com.openclassrooms.paymybuddy.exception.EmailExistException;
-import com.openclassrooms.paymybuddy.exception.NotAnImageFileException;
-import com.openclassrooms.paymybuddy.exception.UserNotFoundException;
-import com.openclassrooms.paymybuddy.exception.UsernameExistException;
-import com.openclassrooms.paymybuddy.service.userServiceImpl.UserServiceImpl;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.openclassrooms.paymybuddy.entity.User;
+import com.openclassrooms.paymybuddy.exception.*;
+import com.openclassrooms.paymybuddy.service.UserService;
+import com.openclassrooms.paymybuddy.service.serviceImpl.SecurityValidationImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 
-@RequiredArgsConstructor
 @Controller
+@AllArgsConstructor
 public class ProfileController {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
+    private final SecurityValidationImpl securityValidationImpl;
 
     @GetMapping("/profile")
-    public String profile(Model model) {
-        User currentUserProfile = userService.getCurrentUserProfile();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            String currentUsername = authentication.getName();
-            model.addAttribute("username", currentUsername);
-        }
-
-        model.addAttribute("user", currentUserProfile);
-        System.out.println("PROFILE");
+    public String showProfilePage(@AuthenticationPrincipal UserDetails userDetails, Model model) throws UserNotFoundException {
+        String email = userDetails.getUsername();
+        User currentUser = userService.getUserByEmail(email);
+        model.addAttribute("user", currentUser);
         return "profile";
     }
 
     @PostMapping("/profile/update")
-    public String updateUserProfile(
-            @RequestParam("newUsername") String newUsername,
-            @RequestParam("newEmail") String newEmail,
+    public String updateProfile(
+            @RequestParam String newUsername,
+            @RequestParam String newEmail,
             @RequestParam("profileImage") MultipartFile profileImage,
-            Model model) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) throws UserNotFoundException, EmailExistException, IOException, UsernameExistException, NotAnImageFileException {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User updatedUser = userService.updateUser(userDetails.getUsername(), newUsername, newEmail, profileImage);
+        securityValidationImpl.updateSecurityContext(updatedUser, request);
+        redirectAttributes.addFlashAttribute("successProfile", "Profil mis à jour avec succès");
+        return "redirect:/login";
+    }
 
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            String currentUsername = authentication.getName();
+    @PostMapping("/profile/update-password")
+    public String updatePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes) throws UserNotFoundException, PasswordMismatchException, InvalidPasswordException {
 
-            try {
-                User updatedUser = userService.updateUser(currentUsername, newUsername, newEmail, profileImage);
-                model.addAttribute("user", updatedUser);
-                model.addAttribute("successMessage", "Profil mis à jour avec succès !");
-            } catch (UserNotFoundException | UsernameExistException | EmailExistException | IOException | NotAnImageFileException e) {
-                model.addAttribute("errorMessage", e.getMessage());
-            }
-        }
-
-        return "redirect:/profile";
+        userService.updatePassword(userDetails.getUsername(), currentPassword, newPassword, confirmPassword);
+        redirectAttributes.addFlashAttribute("successPassword", "Mot de passe mis à jour avec succès");
+        return "redirect:/login";
     }
 }
