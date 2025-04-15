@@ -26,13 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.*;
 
 
-//@Transactional // nettoie les données entre les tests
-@TestInstance(TestInstance.Lifecycle.PER_CLASS) // Pour éviter de réinitialiser le contexte à chaque test (optionnel)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // éviter de réinitialiser le contexte à chaque test
 @Import({MockSecurityBeansConfig.class}) //  injecter des beans mockés
 @AutoConfigureMockMvc // Injecte MockMvc pour tester les endpoints HTTP
 @ActiveProfiles("test")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest // Démarre tout le contexte Spring (comme en production)
+@SpringBootTest
 public class UserDataBaseIT {
 
 
@@ -46,10 +45,9 @@ public class UserDataBaseIT {
 
     @BeforeEach
     void setUp() {
-        // Nettoyer la base de données avant chaque test
+
         userRepository.deleteAll();
 
-        // Créer un utilisateur de test
         testUser = new User();
         testUser.setEmail("john@gmail.com");
         testUser.setPassword(new BCryptPasswordEncoder().encode("John#123"));
@@ -128,7 +126,7 @@ public class UserDataBaseIT {
 
     @Test
     void testLoginWithErrorParameter() throws Exception {
-        // Simuler une tentative de connexion échouée
+        // tentative de connexion échouée
         mockMvc.perform(get("/login").param("error", "true"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("login"))
@@ -137,7 +135,7 @@ public class UserDataBaseIT {
 
     @Test
     void testLoginAfterRegistration() throws Exception {
-        // Simuler une redirection après inscription réussie
+        // une redirection après inscription réussie
         mockMvc.perform(get("/login").param("registered", "true"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("login"))

@@ -34,7 +34,7 @@ public class CurrencyServiceImplTest {
         log.info("convertToEur shouldConvertUsdToEur");
         double result = currencyService.convertToEur(100.0, "USD");
         // Exemple: si 1 USD = 0.85 EUR
-        double expected = 100.0 * 0.85; // ajuste selon ta valeur réelle dans EXCHANGE_RATES
+        double expected = 100.0 * 0.85; // selon la valeur réelle dans EXCHANGE_RATES
         assertEquals(expected, result, 0.0001);
     }
 
@@ -58,7 +58,7 @@ public class CurrencyServiceImplTest {
         log.info("convertFromEur shouldConvertEurToUsd");
         double result = currencyService.convertFromEur(85.0, "USD");
         // Exemple : si 1 USD = 0.85 EUR → 1 EUR = 1/0.85 USD
-        double expected = 85.0 / 0.85; // ajuste selon ta valeur réelle dans EXCHANGE_RATES
+        double expected = 85.0 / 0.85; // selon la valeur réelle dans EXCHANGE_RATES
         assertEquals(expected, result, 0.0001);
     }
 

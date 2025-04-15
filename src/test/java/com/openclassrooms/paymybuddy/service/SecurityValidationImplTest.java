@@ -86,7 +86,7 @@ public class SecurityValidationImplTest {
         UserDetails userDetails = mock(UserDetails.class);
         when(customUserDetailsService.loadUserByUsername(testUser.getEmail()))
                 .thenReturn(userDetails);
-        when(request.getSession(false)).thenReturn(null); // Simuler une session null
+        when(request.getSession(false)).thenReturn(null); // une session null
 
         // Act
         securityValidation.updateSecurityContext(testUser, request);

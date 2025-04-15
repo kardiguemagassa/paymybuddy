@@ -49,7 +49,7 @@ public class ConnectionControllerTest {
         mockUser.setId(1L);
         mockUser.setEmail("john@gmail.com");
 
-        // connexions utilisateurs sous forme d'un Set d'User
+        // connexions user sous forme d'un Set d'User
         Set<User> userConnections = new HashSet<>();
         User contact1 = new User();
         contact1.setEmail("contact1@gmail.com");

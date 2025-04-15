@@ -223,7 +223,6 @@ public class UserConnectionServiceImplTest {
         User newConnection = new User();
         newConnection.setEmail("new@gmail.com");
 
-        // Configuration des mocks
         when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(Optional.of(currentUser));
         when(userRepository.findByEmail(oldConnection.getEmail())).thenReturn(Optional.of(oldConnection));
         when(userRepository.findByEmail(newConnection.getEmail())).thenReturn(Optional.of(newConnection));
@@ -252,9 +251,8 @@ public class UserConnectionServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(UserNotFoundException.class, () -> {
-            userConnectionService.updateConnection(currentUserEmail, oldConnectionEmail, newConnectionEmail);
-        });
+        assertThrows(UserNotFoundException.class, () ->
+            userConnectionService.updateConnection(currentUserEmail, oldConnectionEmail, newConnectionEmail));
 
         verify(userRepository, times(1)).findByEmail(currentUserEmail);
         verify(userRepository, never()).findByEmail(oldConnectionEmail);
@@ -280,9 +278,8 @@ public class UserConnectionServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(UserNotFoundException.class, () -> {
-            userConnectionService.updateConnection(currentUserEmail, oldConnectionEmail, newConnectionEmail);
-        });
+        assertThrows(UserNotFoundException.class, () ->
+            userConnectionService.updateConnection(currentUserEmail, oldConnectionEmail, newConnectionEmail));
 
         verify(userRepository, times(1)).findByEmail(currentUserEmail);
         verify(userRepository, times(1)).findByEmail(oldConnectionEmail);
@@ -352,9 +349,8 @@ public class UserConnectionServiceImplTest {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            userConnectionService.removeConnection(currentUserEmail, targetEmail);
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+            userConnectionService.removeConnection(currentUserEmail, targetEmail));
 
         assertEquals("Utilisateur cible introuvable: " + targetEmail, exception.getMessage());
 
