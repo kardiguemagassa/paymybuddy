@@ -58,3 +58,35 @@ SELECT
 FROM transaction tr
          INNER JOIN user sed ON tr.sender_id = sed.id
          INNER JOIN user rec ON tr.receiver_id = rec.id;
+
+
+
+
+-- Insertion user
+INSERT INTO user (profile_name, email, password, profile_image_url, balance)
+VALUES
+    ('John', 'john@gmail.com', 'John#123', NULL, 100.00),
+    ('Laure', 'laure@gmail.com', 'Laure#123', NULL, 150.00),
+    ('Clara', 'clara@gmail.com', 'Clara#123', NULL, 200.00),
+    ('Luc', 'luc@gmail.com', 'Luc#123', NULL, 250.00);
+
+
+-- John est connecté à Laure et Clara
+INSERT INTO connection (user_id, connection_id)
+VALUES (1, 2), (1, 3);
+
+-- Laure est connecté à Luc
+INSERT INTO connection (user_id, connection_id)
+VALUES (2, 4);
+
+-- Transactions entre users
+INSERT INTO transaction (sender_id, receiver_id, description, amount, fee, execution_date, currency)
+VALUES
+    (1, 2, 'Remboursement café', 5.00, 0.05, NOW(), 'EUR'),
+    (1, 3, 'Participation déjeuner', 12.50, 0.10, NOW(), 'EUR'),
+    (2, 4, 'Achat billet concert', 30.00, 0.30, NOW(), 'EUR'),
+    (3, 1, 'Partage de covoiturage', 7.75, 0.08, NOW(), 'EUR');
+
+-- tester la vue historic
+SELECT * FROM historic;
+
