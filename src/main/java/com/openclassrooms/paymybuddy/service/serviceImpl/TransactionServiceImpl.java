@@ -8,11 +8,12 @@ import com.openclassrooms.paymybuddy.repository.TransactionRepository;
 
 import com.openclassrooms.paymybuddy.repository.UserRepository;
 import com.openclassrooms.paymybuddy.service.TransactionService;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Random;
@@ -33,20 +34,21 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findBySenderEmailOrReceiverEmail(email, email, pageable);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public User getUserWithConnections(String email) throws UserNotFoundException {
         return userRepository.findWithConnectionsByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé"));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public User getUserByTransactionEmail(String email) throws UserNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé avec l'email: " + email));
     }
 
+    @Transactional
     @Override
     public User addBalance(String email, Double amount, String randomAmount) throws UserNotFoundException,IllegalArgumentException {
 
@@ -72,6 +74,7 @@ public class TransactionServiceImpl implements TransactionService {
         return updatedUser;
     }
 
+    @Transactional(readOnly = true)
     public String getFormattedBalanceUpdateMessage(User user, Double amountOrNull) {
         double amountAdded = amountOrNull != null ? amountOrNull : user.getTemporaryAmountAdded();
         return String.format("Rechargement réussi ! %.2f € ajoutés. Nouveau solde: %.2f €", amountAdded, user.getBalance());
@@ -113,6 +116,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    @Transactional
     public double calculateAmountToAdd(Double amount, String randomAmount) {
         if (randomAmount != null && randomAmount.equals("random")) {
             double randomValue = 10 + (2000 - 10) * random.nextDouble();

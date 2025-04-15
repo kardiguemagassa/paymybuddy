@@ -4,7 +4,7 @@ import com.openclassrooms.paymybuddy.entity.User;
 import com.openclassrooms.paymybuddy.exception.*;
 import com.openclassrooms.paymybuddy.repository.UserRepository;
 import com.openclassrooms.paymybuddy.service.UserService;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -26,7 +27,6 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class UserServiceImpl implements UserService {
 
@@ -37,26 +37,28 @@ public class UserServiceImpl implements UserService {
     @Value("${file.upload-dir:src/main/resources/static/uploads/}")
     private String uploadDir;
 
+    @Transactional
     @Override
     public void registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public User getUserByEmail(String email) throws UserNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Aucun utilisateur trouvé avec l'email: " + email));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<User> findUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
     @Override
-    @Transactional()
+    @Transactional
     public User updateUser(String email, String newUsername, String newEmail, MultipartFile profileImage)
             throws IOException, UserNotFoundException {
 

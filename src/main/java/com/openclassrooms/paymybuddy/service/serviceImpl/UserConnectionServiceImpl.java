@@ -15,12 +15,12 @@ import java.util.Set;
 
 @Service
 @AllArgsConstructor
-@Transactional
 public class UserConnectionServiceImpl implements UserConnectionService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     @Override
     public Set<User> getUserConnections(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -57,6 +57,7 @@ public class UserConnectionServiceImpl implements UserConnectionService {
         LOGGER.info("Nouvelle relation ajoutée: {} <-> {}", currentUserEmail, targetEmail);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Set<User> getPotentialConnections(String userEmail) throws UserNotFoundException {
         User currentUser = userRepository.findByEmail(userEmail)
@@ -65,6 +66,7 @@ public class UserConnectionServiceImpl implements UserConnectionService {
         return new HashSet<>(userRepository.findPotentialConnections(userEmail, currentUser.getId()));
     }
 
+    @Transactional
     @Override
     public void updateConnection(String currentUserEmail, String oldConnectionEmail, String newConnectionEmail)
             throws UserNotFoundException {

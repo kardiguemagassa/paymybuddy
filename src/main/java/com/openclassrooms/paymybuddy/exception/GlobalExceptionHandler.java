@@ -47,22 +47,7 @@ public class GlobalExceptionHandler {
     // gestion de spring validation sur entity
     private User getTargetFromViolations(Set<ConstraintViolation<?>> violations) {
         return (User) violations.stream().findFirst().map(ConstraintViolation::getLeafBean).orElse(null);
-        /*
-        * findFirst() : Prend la première erreur.
-
-        .map(ConstraintViolation::getLeafBean) : Récupère l'objet concerné (User).
-
-        orElse(null) : Retourne null si aucune erreur.*/
     }
-
-//    private User getTargetFromViolations(Set<ConstraintViolation<?>> violations) {
-//        return violations.stream()
-//                .findFirst()
-//                .map(ConstraintViolation::getLeafBean)
-//                .filter(bean -> bean instanceof User) // Vérifie que c'est bien un User
-//                .map(bean -> (User) bean) // Cast seulement si c'est un User
-//                .orElse(null);
-//    }
 
     // Cette méthode est appelée dans le contrôleur Spring utilisant @Valid.
     @ExceptionHandler(MethodArgumentNotValidException.class)
