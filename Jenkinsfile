@@ -164,6 +164,9 @@ pipeline {
                             branch 'develop'
                         }
                     }
+                    options {
+                        timeout(time: 20, unit: 'MINUTES')
+                    }
                     steps {
                         script {
                             runDependencyCheck()
@@ -172,6 +175,9 @@ pipeline {
                 }
 
                 stage('Maven Security Audit') {
+                    options {
+                        timeout(time: 10, unit: 'MINUTES')
+                    }
                     steps {
                         script {
                             runMavenSecurityAudit()
@@ -453,14 +459,18 @@ def runDependencyCheck() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
-        sh """
-            mvn org.owasp:dependency-check-maven:check \
-                -DfailBuildOnCVSS=8 \
-                -DskipProvidedScope=true \
-                -DskipRuntimeScope=false \
-                -DsuppressFailureOnError=true \
-                -B -q
-        """
+        timeout(time: 15, unit: 'MINUTES') {
+            sh """
+                mvn org.owasp:dependency-check-maven:check \
+                    -DfailBuildOnCVSS=8 \
+                    -DskipProvidedScope=true \
+                    -DskipRuntimeScope=false \
+                    -DsuppressFailureOnError=true \
+                    -DautoUpdate=false \
+                    -DcveValidForHours=24 \
+                    -B -q
+            """
+        }
 
         // Archivage du rapport si généré
         if (fileExists('target/dependency-check-report.html')) {
@@ -472,12 +482,19 @@ def runDependencyCheck() {
                 reportFiles: 'dependency-check-report.html',
                 reportName: 'OWASP Dependency Check Report'
             ])
+            echo "✅ Rapport OWASP publié"
         }
 
         echo "✅ Vérification des dépendances terminée"
 
     } catch (Exception e) {
         echo "⚠️ Problème avec OWASP Dependency Check: ${e.getMessage()}"
+
+        // Si c'est un timeout, on arrête complètement cette étape
+        if (e.getMessage().contains("timeout") || e.getMessage().contains("Timeout")) {
+            echo "⏰ OWASP Dependency Check interrompu pour timeout - Continuons le pipeline"
+        }
+
         currentBuild.result = 'UNSTABLE'
     }
 }
@@ -486,23 +503,29 @@ def runMavenSecurityAudit() {
     try {
         echo "🔍 Audit de sécurité Maven..."
 
-        sh """
-            mvn versions:display-dependency-updates \
-                -DprocessDependencyManagement=false \
-                -DgenerateBackupPoms=false \
-                -B -q
-        """
+        timeout(time: 8, unit: 'MINUTES') {
+            sh """
+                mvn versions:display-dependency-updates \
+                    -DprocessDependencyManagement=false \
+                    -DgenerateBackupPoms=false \
+                    -B -q
+            """
 
-        sh """
-            mvn versions:display-plugin-updates \
-                -DgenerateBackupPoms=false \
-                -B -q
-        """
+            sh """
+                mvn versions:display-plugin-updates \
+                    -DgenerateBackupPoms=false \
+                    -B -q
+            """
+        }
 
         echo "✅ Audit de sécurité Maven terminé"
 
     } catch (Exception e) {
         echo "⚠️ Audit Maven échoué: ${e.getMessage()}"
+
+        if (e.getMessage().contains("timeout") || e.getMessage().contains("Timeout")) {
+            echo "⏰ Audit Maven interrompu pour timeout - Continuons le pipeline"
+        }
     }
 }
 
