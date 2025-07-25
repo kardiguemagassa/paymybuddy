@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String ERROR_BALANCE = "errorBalance";
 
     // gestion de spring validation sur entity
     // Cette méthode est appelée quand une validation échoue sur une entité persistée (@Entity) avec @NotNull, @Email, etc.
@@ -71,14 +72,19 @@ public class GlobalExceptionHandler {
 
         String referer = request.getHeader("referer");
 
-        if (referer != null || !referer.contains("addRelationship")) {
+        if (referer != null && !referer.contains("addRelationship")) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/addRelationship";
         }
 
          // erreur de balance
-        if (e.getMessage().contains("balance") || e.getMessage().contains("montant") || e.getMessage().contains("amount")) {
-            redirectAttributes.addFlashAttribute("errorBalance", e.getMessage());
+        String errorMessage = e.getMessage();
+        if (errorMessage != null && (
+                errorMessage.contains("balance") ||
+                errorMessage.contains("montant") ||
+                errorMessage.contains("amount"))) {
+
+            redirectAttributes.addFlashAttribute(ERROR_BALANCE, errorMessage);
             return "redirect:/addBalance";
         }
 
@@ -121,7 +127,7 @@ public class GlobalExceptionHandler {
         } else if (e.getMessage().contains("email") || e.getMessage().contains("profile")) {
             return "errorProfile";
         } else if (e.getMessage().contains("balance") || e.getMessage().contains("montant")) {
-            return "errorBalance";
+            return ERROR_BALANCE;
         }
         return "error";
     }
@@ -135,7 +141,7 @@ public class GlobalExceptionHandler {
         String referer = request.getHeader("Referer");
 
         if (referer != null && referer.contains("/addBalance")) {
-            redirectAttributes.addFlashAttribute("errorBalance", "Utilisateur non trouvé: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(ERROR_BALANCE, "Utilisateur non trouvé: " + e.getMessage());
             return "redirect:/addBalance";
         } else if (referer != null && referer.contains("/transaction")) {
             redirectAttributes.addFlashAttribute("errorTransaction", e.getMessage());
