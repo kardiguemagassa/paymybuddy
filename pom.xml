@@ -297,6 +297,20 @@
 				</executions>
 			</plugin>
 
+			<!-- Configurer la clé API NVD -->
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>9.0.7</version>
+				<configuration>
+					<failBuildOnCVSS>8</failBuildOnCVSS>
+					<autoUpdate>true</autoUpdate>
+					<retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
+					<nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+				</configuration>
+			</plugin>
+
+
 		</plugins>
 	</build>
 
