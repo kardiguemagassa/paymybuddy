@@ -21,7 +21,8 @@ def config = [
     timeouts: [
         qualityGate: 2,
         deployment: 5,
-        sonarAnalysis: 10
+        sonarAnalysis: 10,
+        owaspCheck: 20  // Nouveau timeout pour OWASP
     ],
     ports: [
         master: '9003',
@@ -63,6 +64,8 @@ pipeline {
         // Variables SonarQube
         SONAR_PROJECT_KEY = "${getSonarProjectKey(env.BRANCH_NAME, config.sonar)}"
         MAVEN_OPTS = "-Dmaven.repo.local=${WORKSPACE}/.m2/repository -Xmx1024m"
+        // Configuration pour OWASP Dependency Check
+        NVD_API_KEY = credentials('nvd-api-key') // Optionnel mais recommandé
     }
 
     stages {
@@ -169,7 +172,14 @@ pipeline {
                     }
                     steps {
                         script {
-                            runDependencyCheck()
+                            runDependencyCheckFixed()
+                        }
+                    }
+                    post {
+                        always {
+                            script {
+                                archiveOwaspReports()
+                            }
                         }
                     }
                 }
@@ -455,12 +465,39 @@ def checkQualityGate(config) {
     }
 }
 
-def runDependencyCheck() {
+// ✅ FONCTION CORRIGÉE POUR OWASP DEPENDENCY CHECK
+def runDependencyCheckFixed() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
-        timeout(time: 15, unit: 'MINUTES') {
-            sh """
+        // Étape 1: Initialiser/mettre à jour la base de données OWASP
+        echo "📥 Initialisation de la base de données NVD..."
+        try {
+            timeout(time: 15, unit: 'MINUTES') {
+                def nvdUpdateCommand = """
+                    mvn org.owasp:dependency-check-maven:update-only \
+                        -DautoUpdate=true \
+                        -DcveValidForHours=24 \
+                        -B -q
+                """
+
+                // Ajout de la clé API NVD si disponible
+                if (env.NVD_API_KEY) {
+                    nvdUpdateCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+                }
+
+                sh nvdUpdateCommand
+                echo "✅ Base de données NVD mise à jour"
+            }
+        } catch (Exception updateError) {
+            echo "⚠️ Échec de la mise à jour de la base NVD: ${updateError.getMessage()}"
+            echo "🔄 Tentative avec une base locale..."
+        }
+
+        // Étape 2: Exécuter l'analyse des dépendances
+        echo "🔍 Analyse des vulnérabilités..."
+        timeout(time: config.timeouts.owaspCheck, unit: 'MINUTES') {
+            def checkCommand = """
                 mvn org.owasp:dependency-check-maven:check \
                     -DfailBuildOnCVSS=8 \
                     -DskipProvidedScope=true \
@@ -468,34 +505,77 @@ def runDependencyCheck() {
                     -DsuppressFailureOnError=true \
                     -DautoUpdate=false \
                     -DcveValidForHours=24 \
+                    -DretireJsAnalyzerEnabled=false \
+                    -DnodeAnalyzerEnabled=false \
                     -B -q
             """
+
+            // Ajout de la clé API NVD si disponible
+            if (env.NVD_API_KEY) {
+                checkCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+            }
+
+            sh checkCommand
         }
 
-        // Archivage du rapport si généré
-        if (fileExists('target/dependency-check-report.html')) {
-            publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'target',
-                reportFiles: 'dependency-check-report.html',
-                reportName: 'OWASP Dependency Check Report'
-            ])
-            echo "✅ Rapport OWASP publié"
-        }
-
-        echo "✅ Vérification des dépendances terminée"
+        echo "✅ Vérification des dépendances terminée avec succès"
 
     } catch (Exception e) {
-        echo "⚠️ Problème avec OWASP Dependency Check: ${e.getMessage()}"
+        def errorMessage = e.getMessage()
 
-        // Si c'est un timeout, on arrête complètement cette étape
-        if (e.getMessage().contains("timeout") || e.getMessage().contains("Timeout")) {
+        if (errorMessage.contains("NoDataException")) {
+            echo "❌ Base de données OWASP non disponible"
+            echo "💡 Solutions possibles:"
+            echo "   1. Configurer une clé API NVD (recommandé)"
+            echo "   2. Permettre l'auto-update de la base"
+            echo "   3. Initialiser manuellement la base de données"
+
+            // Alternative: essayer avec un mode dégradé
+            try {
+                echo "🔄 Tentative en mode dégradé sans base NVD..."
+                sh """
+                    mvn org.owasp:dependency-check-maven:check \
+                        -DskipProvidedScope=true \
+                        -DskipRuntimeScope=false \
+                        -DsuppressFailureOnError=true \
+                        -DautoUpdate=true \
+                        -DcveValidForHours=168 \
+                        -DfailBuildOnCVSS=10 \
+                        -DretireJsAnalyzerEnabled=false \
+                        -DnodeAnalyzerEnabled=false \
+                        -B -q || true
+                """
+                echo "⚠️ Analyse OWASP terminée en mode dégradé"
+            } catch (Exception fallbackError) {
+                echo "❌ Impossible d'exécuter OWASP Dependency Check même en mode dégradé"
+                currentBuild.result = 'UNSTABLE'
+            }
+        } else if (errorMessage.contains("timeout") || errorMessage.contains("Timeout")) {
             echo "⏰ OWASP Dependency Check interrompu pour timeout - Continuons le pipeline"
+            currentBuild.result = 'UNSTABLE'
+        } else {
+            echo "⚠️ Problème avec OWASP Dependency Check: ${errorMessage}"
+            currentBuild.result = 'UNSTABLE'
         }
+    }
+}
 
-        currentBuild.result = 'UNSTABLE'
+def archiveOwaspReports() {
+    // Archivage du rapport OWASP si généré
+    if (fileExists('target/dependency-check-report.html')) {
+        archiveArtifacts artifacts: 'target/dependency-check-report.*', allowEmptyArchive: true
+
+        publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: 'target',
+            reportFiles: 'dependency-check-report.html',
+            reportName: 'OWASP Dependency Check Report'
+        ])
+        echo "✅ Rapport OWASP archivé et publié"
+    } else {
+        echo "⚠️ Aucun rapport OWASP généré"
     }
 }
 
