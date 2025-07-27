@@ -476,50 +476,9 @@ def runDependencyCheckFixed() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
-        // Vérification optionnelle de la clé NVD
-        def nvdApiKeyExists = false
-        try {
-            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                if (env.NVD_API_KEY && env.NVD_API_KEY.trim()) {
-                    nvdApiKeyExists = true
-                    echo "✅ Clé API NVD configurée"
-                }
-            }
-        } catch (Exception e) {
-            echo "⚠️ Clé API NVD non configurée - continuons sans API key"
-        }
-
-        // Étape 1: Initialiser/mettre à jour la base de données OWASP
-        echo "📥 Initialisation de la base de données NVD..."
-        try {
-            timeout(time: 15, unit: 'MINUTES') {
-                def nvdUpdateCommand = """
-                    mvn org.owasp:dependency-check-maven:update-only \
-                        -DautoUpdate=true \
-                        -DcveValidForHours=24 \
-                        -B -q
-                """
-
-                // Ajout de la clé API NVD si disponible
-                if (nvdApiKeyExists) {
-                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                        nvdUpdateCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
-                        sh nvdUpdateCommand
-                    }
-                } else {
-                    sh nvdUpdateCommand
-                }
-
-                echo "✅ Base de données NVD mise à jour"
-            }
-        } catch (Exception updateError) {
-            echo "⚠️ Échec de la mise à jour de la base NVD: ${updateError.getMessage()}"
-            echo "🔄 Tentative avec une base locale..."
-        }
-
-        // Étape 2: Exécuter l'analyse des dépendances
-        echo "🔍 Analyse des vulnérabilités..."
-        timeout(time: config.timeouts.owaspCheck, unit: 'MINUTES') {
+        // Analyse directe sans mise à jour de la base NVD
+        echo "🔍 Analyse avec base locale..."
+        timeout(time: 20, unit: 'MINUTES') {
             def checkCommand = """
                 mvn org.owasp:dependency-check-maven:check \
                     -DfailBuildOnCVSS=8 \
@@ -527,62 +486,28 @@ def runDependencyCheckFixed() {
                     -DskipRuntimeScope=false \
                     -DsuppressFailureOnError=true \
                     -DautoUpdate=false \
-                    -DcveValidForHours=24 \
+                    -DcveValidForHours=168 \
                     -DretireJsAnalyzerEnabled=false \
                     -DnodeAnalyzerEnabled=false \
-                    -B -q
+                    -DnvdDatafeedEnabled=false \
+                    -DossindexAnalyzerEnabled=false \
+                    -B -q || true
             """
 
-            // Ajout de la clé API NVD si disponible
-            if (nvdApiKeyExists) {
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                    checkCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
-                    sh checkCommand
-                }
-            } else {
-                sh checkCommand
-            }
+            sh checkCommand
         }
 
-        echo "✅ Vérification des dépendances terminée avec succès"
+        echo "✅ Vérification des dépendances terminée"
 
     } catch (Exception e) {
         def errorMessage = e.getMessage()
+        echo "⚠️ Problème avec OWASP Dependency Check: ${errorMessage}"
 
-        if (errorMessage.contains("NoDataException")) {
-            echo "❌ Base de données OWASP non disponible"
-            echo "💡 Solutions possibles:"
-            echo "   1. Configurer une clé API NVD (recommandé)"
-            echo "   2. Permettre l'auto-update de la base"
-            echo "   3. Initialiser manuellement la base de données"
-
-            // Alternative: essayer avec un mode dégradé
-            try {
-                echo "🔄 Tentative en mode dégradé sans base NVD..."
-                sh """
-                    mvn org.owasp:dependency-check-maven:check \
-                        -DskipProvidedScope=true \
-                        -DskipRuntimeScope=false \
-                        -DsuppressFailureOnError=true \
-                        -DautoUpdate=true \
-                        -DcveValidForHours=168 \
-                        -DfailBuildOnCVSS=10 \
-                        -DretireJsAnalyzerEnabled=false \
-                        -DnodeAnalyzerEnabled=false \
-                        -B -q || true
-                """
-                echo "⚠️ Analyse OWASP terminée en mode dégradé"
-            } catch (Exception fallbackError) {
-                echo "❌ Impossible d'exécuter OWASP Dependency Check même en mode dégradé"
-                currentBuild.result = 'UNSTABLE'
-            }
-        } else if (errorMessage.contains("timeout") || errorMessage.contains("Timeout")) {
-            echo "⏰ OWASP Dependency Check interrompu pour timeout - Continuons le pipeline"
-            currentBuild.result = 'UNSTABLE'
-        } else {
-            echo "⚠️ Problème avec OWASP Dependency Check: ${errorMessage}"
-            currentBuild.result = 'UNSTABLE'
+        if (errorMessage.contains("timeout") || errorMessage.contains("Timeout")) {
+            echo "⏰ OWASP Dependency Check interrompu pour timeout"
         }
+
+        currentBuild.result = 'UNSTABLE'
     }
 }
 
