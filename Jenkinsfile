@@ -64,8 +64,6 @@ pipeline {
         // Variables SonarQube
         SONAR_PROJECT_KEY = "${getSonarProjectKey(env.BRANCH_NAME, config.sonar)}"
         MAVEN_OPTS = "-Dmaven.repo.local=${WORKSPACE}/.m2/repository -Xmx1024m"
-        // Configuration pour OWASP Dependency Check
-        NVD_API_KEY = credentials('nvd-api-key') // Optionnel mais recommandé
     }
 
     stages {
@@ -286,26 +284,34 @@ pipeline {
     post {
         always {
             script {
-                // Archivage des artefacts (même sans Docker)
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, allowEmptyArchive: true
+                try {
+                    // Archivage des artefacts (même sans Docker)
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, allowEmptyArchive: true
 
-                // Nettoyage des images Docker locales (seulement si Docker disponible)
-                if (env.DOCKER_AVAILABLE == "true") {
-                    cleanupDockerImages(config)
+                    // Nettoyage des images Docker locales (seulement si Docker disponible)
+                    if (env.DOCKER_AVAILABLE == "true") {
+                        cleanupDockerImages(config)
+                    }
+
+                    // Envoi de notification
+                    sendNotification(config.emailRecipients)
+                } catch (Exception e) {
+                    echo "⚠️ Erreur dans post always: ${e.getMessage()}"
+                } finally {
+                    // Nettoyage du workspace
+                    cleanWs()
                 }
-
-                // Nettoyage du workspace
-                cleanWs()
-
-                // Envoi de notification
-                sendNotification(config.emailRecipients)
             }
         }
         failure {
             script {
-                echo "❌ Pipeline échoué - Vérifiez les logs ci-dessus"
-                // Collecte d'informations de diagnostic
-                collectDiagnosticInfo()
+                try {
+                    echo "❌ Pipeline échoué - Vérifiez les logs ci-dessus"
+                    // Collecte d'informations de diagnostic
+                    collectDiagnosticInfo()
+                } catch (Exception e) {
+                    echo "⚠️ Erreur lors de la collecte de diagnostic: ${e.getMessage()}"
+                }
             }
         }
         success {
@@ -470,6 +476,19 @@ def runDependencyCheckFixed() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
+        // Vérification optionnelle de la clé NVD
+        def nvdApiKeyExists = false
+        try {
+            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                if (env.NVD_API_KEY && env.NVD_API_KEY.trim()) {
+                    nvdApiKeyExists = true
+                    echo "✅ Clé API NVD configurée"
+                }
+            }
+        } catch (Exception e) {
+            echo "⚠️ Clé API NVD non configurée - continuons sans API key"
+        }
+
         // Étape 1: Initialiser/mettre à jour la base de données OWASP
         echo "📥 Initialisation de la base de données NVD..."
         try {
@@ -482,11 +501,15 @@ def runDependencyCheckFixed() {
                 """
 
                 // Ajout de la clé API NVD si disponible
-                if (env.NVD_API_KEY) {
-                    nvdUpdateCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+                if (nvdApiKeyExists) {
+                    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                        nvdUpdateCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+                        sh nvdUpdateCommand
+                    }
+                } else {
+                    sh nvdUpdateCommand
                 }
 
-                sh nvdUpdateCommand
                 echo "✅ Base de données NVD mise à jour"
             }
         } catch (Exception updateError) {
@@ -511,11 +534,14 @@ def runDependencyCheckFixed() {
             """
 
             // Ajout de la clé API NVD si disponible
-            if (env.NVD_API_KEY) {
-                checkCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+            if (nvdApiKeyExists) {
+                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                    checkCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+                    sh checkCommand
+                }
+            } else {
+                sh checkCommand
             }
-
-            sh checkCommand
         }
 
         echo "✅ Vérification des dépendances terminée avec succès"
