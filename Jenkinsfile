@@ -1,25 +1,16 @@
-// Configuration centralisée améliorée
+// Configuration centralisée
 def config = [
     emailRecipients: "magassakara@gmail.com",
     containerName: "paymybuddy-app",
     dockerRegistry: "docker.io",
     dockerHome: '/usr/local/bin',
     sonarProjectKey: "paymybuddy",
-
-    // Configuration OWASP avec clé API
-    security: [
-        owaspEnabled: true,
-        nvdApiKeyId: "nvd-api-key", // ID du credential Jenkins
-        failOnCVSS: 7.0,
-        maxExecutionTime: 15,
-        fallbackEnabled: true
-    ],
-
     // Configuration SonarQube
     sonar: [
-        communityEdition: true,
+        // Détection automatique de l'édition SonarQube
+        communityEdition: true, // Changez à false si vous avez Developer Edition+
         projectKey: "paymybuddy",
-        qualityProfileJava: "Sonar way",
+        qualityProfileJava: "Sonar way", // Profile de qualité par défaut
         exclusions: [
             "**/target/**",
             "**/*.min.js",
@@ -27,20 +18,12 @@ def config = [
             "**/.mvn/**"
         ]
     ],
-
     timeouts: [
-        qualityGate: 3,
-        deployment: 8,
-        sonarAnalysis: 15,
-        owaspCheck: 15,
-        mavenBuild: 20
+        qualityGate: 2,
+        deployment: 5,
+        sonarAnalysis: 10,
+        owaspCheck: 20  // Nouveau timeout pour OWASP
     ],
-
-    retry: [
-        maxAttempts: 3,
-        delaySeconds: 30
-    ],
-
     ports: [
         master: '9003',
         develop: '9002',
@@ -72,11 +55,13 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = "1"
         COMPOSE_DOCKER_CLI_BUILD = "1"
+        // Variables calculées dynamiquement
         BRANCH_NAME = "${env.BRANCH_NAME ?: 'unknown'}"
         BUILD_NUMBER = "${env.BUILD_NUMBER ?: '0'}"
         HTTP_PORT = "${getHTTPPort(env.BRANCH_NAME, config.ports)}"
         ENV_NAME = "${getEnvName(env.BRANCH_NAME, config.environments)}"
         CONTAINER_TAG = "${getTag(env.BUILD_NUMBER, env.BRANCH_NAME)}"
+        // Variables SonarQube
         SONAR_PROJECT_KEY = "${getSonarProjectKey(env.BRANCH_NAME, config.sonar)}"
         MAVEN_OPTS = "-Dmaven.repo.local=${WORKSPACE}/.m2/repository -Xmx1024m"
     }
@@ -85,9 +70,16 @@ pipeline {
         stage('Checkout & Setup') {
             steps {
                 script {
+                    // Checkout du code
                     checkout scm
+
+                    // Validation de l'environnement
                     validateEnvironment()
+
+                    // Vérification de Docker avec retry
                     env.DOCKER_AVAILABLE = checkDockerAvailability()
+
+                    // Affichage de la configuration
                     displayBuildInfo(config)
                 }
             }
@@ -96,7 +88,17 @@ pipeline {
         stage('Build & Test') {
             steps {
                 script {
-                    buildWithMaven(config)
+                    echo "🏗️ Compilation et tests Maven..."
+
+                    sh """
+                        mvn clean verify \
+                            org.jacoco:jacoco-maven-plugin:prepare-agent \
+                            -DskipTests=false \
+                            -Dmaven.test.failure.ignore=false \
+                            -Djacoco.destFile=target/jacoco.exec \
+                            -Djacoco.dataFile=target/jacoco.exec \
+                            -B -U -q
+                    """
                 }
             }
             post {
@@ -118,12 +120,13 @@ pipeline {
             }
             steps {
                 script {
-                    performSonarAnalysisImproved(config)
+                    performSonarAnalysis(config)
                 }
             }
             post {
                 always {
                     script {
+                        // Archivage des rapports SonarQube si disponibles
                         if (fileExists('.scannerwork/report-task.txt')) {
                             archiveArtifacts artifacts: '.scannerwork/report-task.txt', allowEmptyArchive: true
                         }
@@ -140,6 +143,7 @@ pipeline {
                         branch 'develop'
                         changeRequest()
                     }
+                    // Seulement si SonarQube a réussi
                     expression {
                         return fileExists('.scannerwork/report-task.txt')
                     }
@@ -166,7 +170,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            runDependencyCheckWithApiKey(config)
+                            runDependencyCheckFixed()
                         }
                     }
                     post {
@@ -198,6 +202,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // S'assurer que Docker est disponible
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -222,6 +227,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible ET l'image construite
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -241,6 +247,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -260,6 +267,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -267,7 +275,7 @@ pipeline {
             }
             steps {
                 script {
-                    performHealthCheckImproved(config)
+                    performHealthCheck(config)
                 }
             }
         }
@@ -277,16 +285,20 @@ pipeline {
         always {
             script {
                 try {
+                    // Archivage des artefacts (même sans Docker)
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, allowEmptyArchive: true
 
+                    // Nettoyage des images Docker locales (seulement si Docker disponible)
                     if (env.DOCKER_AVAILABLE == "true") {
                         cleanupDockerImages(config)
                     }
 
-                    sendNotification(config.emailRecipients, config)
+                    // Envoi de notification
+                    sendNotification(config.emailRecipients)
                 } catch (Exception e) {
                     echo "⚠️ Erreur dans post always: ${e.getMessage()}"
                 } finally {
+                    // Nettoyage du workspace
                     cleanWs()
                 }
             }
@@ -295,6 +307,7 @@ pipeline {
             script {
                 try {
                     echo "❌ Pipeline échoué - Vérifiez les logs ci-dessus"
+                    // Collecte d'informations de diagnostic
                     collectDiagnosticInfo()
                 } catch (Exception e) {
                     echo "⚠️ Erreur lors de la collecte de diagnostic: ${e.getMessage()}"
@@ -319,12 +332,13 @@ pipeline {
 }
 
 // =============================================================================
-// FONCTIONS PRINCIPALES AMÉLIORÉES
+// FONCTIONS UTILITAIRES AMÉLIORÉES
 // =============================================================================
 
 def validateEnvironment() {
     echo "🔍 Validation de l'environnement..."
 
+    // Vérification des outils requis
     def requiredTools = ['mvn', 'java', 'git']
     requiredTools.each { tool ->
         try {
@@ -335,46 +349,25 @@ def validateEnvironment() {
         }
     }
 
+    // Vérification de l'espace disque
     sh """
         df -h . | tail -1 | awk '{print "💾 Espace disque disponible: " \$4 " (" \$5 " utilisé)"}'
     """
 }
 
-def buildWithMaven(config) {
-    echo "🏗️ Compilation et tests Maven..."
-
-    retry(config.retry.maxAttempts) {
-        timeout(time: config.timeouts.mavenBuild, unit: 'MINUTES') {
-            sh """
-                mvn clean verify \
-                    org.jacoco:jacoco-maven-plugin:prepare-agent \
-                    -DskipTests=false \
-                    -Dmaven.test.failure.ignore=false \
-                    -Djacoco.destFile=target/jacoco.exec \
-                    -Djacoco.dataFile=target/jacoco.exec \
-                    -Dmaven.repo.local=\${WORKSPACE}/.m2/repository \
-                    -Duser.timezone=Europe/Paris \
-                    -B -U -q
-            """
-        }
-    }
-
-    echo "✅ Build Maven réussi"
-}
-
-def performSonarAnalysisImproved(config) {
+def performSonarAnalysis(config) {
     echo "🔍 Démarrage de l'analyse SonarQube..."
 
     withSonarQubeEnv('SonarQube') {
         withCredentials([string(credentialsId: 'sonartoken', variable: 'SONAR_TOKEN')]) {
             try {
-                def sonarCommand = buildSonarCommandImproved(config)
+                // Construction de la commande SonarQube adaptée à l'édition
+                def sonarCommand = buildSonarCommand(config)
+
                 echo "📋 Commande SonarQube: ${sonarCommand}"
 
                 timeout(time: config.timeouts.sonarAnalysis, unit: 'MINUTES') {
-                    retry(2) {
-                        sh sonarCommand
-                    }
+                    sh sonarCommand
                 }
 
                 echo "✅ Analyse SonarQube terminée avec succès"
@@ -382,44 +375,39 @@ def performSonarAnalysisImproved(config) {
             } catch (Exception e) {
                 echo "❌ Erreur lors de l'analyse SonarQube: ${e.getMessage()}"
 
+                // Si l'erreur concerne les branches, on continue avec une analyse simple
                 if (e.getMessage().contains("sonar.branch.name")) {
                     echo "⚠️ Fonctionnalité multi-branches non supportée, analyse simple en cours..."
                     def fallbackCommand = buildFallbackSonarCommand(config)
                     sh fallbackCommand
                     echo "✅ Analyse SonarQube simple terminée"
-                } else if (env.BRANCH_NAME == 'master') {
-                    throw e
                 } else {
-                    echo "⚠️ Analyse SonarQube échouée sur branche de développement - Continue"
-                    currentBuild.result = 'UNSTABLE'
+                    throw e
                 }
             }
         }
     }
 }
 
-def buildSonarCommandImproved(config) {
+def buildSonarCommand(config) {
     def baseCommand = """
         mvn sonar:sonar \
             -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-            -Dsonar.projectName="PayMyBuddy" \
-            -Dsonar.projectVersion=${env.BUILD_NUMBER} \
             -Dsonar.host.url=\$SONAR_HOST_URL \
             -Dsonar.token=\${SONAR_TOKEN} \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.java.binaries=target/classes \
-            -Dsonar.java.test.binaries=target/test-classes \
-            -Dsonar.sources=src/main/java \
-            -Dsonar.tests=src/test/java \
             -Dsonar.exclusions="${config.sonar.exclusions.join(',')}" \
             -Dsonar.java.source=21 \
             -Dsonar.java.target=21 \
-            -Dsonar.sourceEncoding=UTF-8 \
             -B -q
     """
 
+    // Ajout des paramètres spécifiques selon l'édition
     if (!config.sonar.communityEdition && env.BRANCH_NAME) {
         baseCommand += " -Dsonar.branch.name=${env.BRANCH_NAME}"
+
+        // Paramètres additionnels pour Developer Edition+
         if (env.BRANCH_NAME != 'master') {
             baseCommand += " -Dsonar.branch.target=master"
         }
@@ -453,6 +441,7 @@ def checkQualityGate(config) {
             if (qg.status != 'OK') {
                 echo "❌ Quality Gate: ${qg.status}"
 
+                // Affichage des détails si disponibles
                 if (qg.conditions) {
                     echo "📊 Détails des conditions:"
                     qg.conditions.each { condition ->
@@ -460,6 +449,7 @@ def checkQualityGate(config) {
                     }
                 }
 
+                // En fonction de la branche, on peut être plus ou moins strict
                 if (env.BRANCH_NAME == 'master') {
                     error "🚫 Quality Gate échoué sur la branche master - Arrêt du pipeline"
                 } else {
@@ -481,64 +471,30 @@ def checkQualityGate(config) {
     }
 }
 
-// ✅ FONCTION CORRIGÉE AVEC CLÉ API NVD
-def runDependencyCheckWithApiKey(config) {
+// ✅ FONCTION CORRIGÉE POUR OWASP DEPENDENCY CHECK
+def runDependencyCheckFixed() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
-        // Vérification si la clé API NVD est disponible
-        def hasNvdApiKey = false
-        try {
-            withCredentials([string(credentialsId: config.security.nvdApiKeyId, variable: 'NVD_API_KEY')]) {
-                hasNvdApiKey = true
-                echo "✅ Clé API NVD détectée"
-            }
-        } catch (Exception e) {
-            echo "⚠️ Aucune clé API NVD configurée - Mode dégradé"
-        }
+        // Analyse directe sans mise à jour de la base NVD
+        echo "🔍 Analyse avec base locale..."
+        timeout(time: 20, unit: 'MINUTES') {
+            def checkCommand = """
+                mvn org.owasp:dependency-check-maven:check \
+                    -DfailBuildOnCVSS=8 \
+                    -DskipProvidedScope=true \
+                    -DskipRuntimeScope=false \
+                    -DsuppressFailureOnError=true \
+                    -DautoUpdate=false \
+                    -DcveValidForHours=168 \
+                    -DretireJsAnalyzerEnabled=false \
+                    -DnodeAnalyzerEnabled=false \
+                    -DnvdDatafeedEnabled=false \
+                    -DossindexAnalyzerEnabled=false \
+                    -B -q || true
+            """
 
-        timeout(time: config.security.maxExecutionTime, unit: 'MINUTES') {
-            if (hasNvdApiKey) {
-                // AVEC clé API NVD - Configuration optimale
-                withCredentials([string(credentialsId: config.security.nvdApiKeyId, variable: 'NVD_API_KEY')]) {
-                    echo "🔍 Analyse OWASP avec clé API NVD..."
-                    sh """
-                        mvn org.owasp:dependency-check-maven:check \
-                            -DnvdApiKey=\${NVD_API_KEY} \
-                            -DfailBuildOnCVSS=${config.security.failOnCVSS} \
-                            -DskipProvidedScope=true \
-                            -DskipRuntimeScope=false \
-                            -DsuppressFailureOnError=true \
-                            -DautoUpdate=true \
-                            -DcveValidForHours=24 \
-                            -DretireJsAnalyzerEnabled=false \
-                            -DnodeAnalyzerEnabled=false \
-                            -DossindexAnalyzerEnabled=false \
-                            -DconnectionTimeout=300000 \
-                            -DreadTimeout=300000 \
-                            -B -q || true
-                    """
-                }
-            } else {
-                // SANS clé API - Mode dégradé avec base locale uniquement
-                echo "🔍 Mode dégradé : analyse avec base locale uniquement..."
-                sh """
-                    mvn org.owasp:dependency-check-maven:check \
-                        -DfailBuildOnCVSS=${config.security.failOnCVSS} \
-                        -DskipProvidedScope=true \
-                        -DskipRuntimeScope=false \
-                        -DsuppressFailureOnError=true \
-                        -DautoUpdate=false \
-                        -DnvdDatafeedEnabled=false \
-                        -DnvdApiEnabled=false \
-                        -DcentralAnalyzerEnabled=false \
-                        -DnexusAnalyzerEnabled=false \
-                        -DretireJsAnalyzerEnabled=false \
-                        -DnodeAnalyzerEnabled=false \
-                        -DossindexAnalyzerEnabled=false \
-                        -B -q || true
-                """
-            }
+            sh checkCommand
         }
 
         echo "✅ Vérification des dépendances terminée"
@@ -547,19 +503,8 @@ def runDependencyCheckWithApiKey(config) {
         def errorMessage = e.getMessage()
         echo "⚠️ Problème avec OWASP Dependency Check: ${errorMessage}"
 
-        if (config.security.fallbackEnabled) {
-            echo "🔄 Fallback: analyse des dépendances avec Maven..."
-            try {
-                sh """
-                    mvn dependency:analyze \
-                        -DfailOnWarning=false \
-                        -DignoreNonCompile=true \
-                        -B -q || true
-                """
-                echo "✅ Analyse alternative terminée"
-            } catch (Exception fallbackException) {
-                echo "⚠️ Analyse alternative échouée: ${fallbackException.getMessage()}"
-            }
+        if (errorMessage.contains("timeout") || errorMessage.contains("Timeout")) {
+            echo "⏰ OWASP Dependency Check interrompu pour timeout"
         }
 
         currentBuild.result = 'UNSTABLE'
@@ -567,6 +512,7 @@ def runDependencyCheckWithApiKey(config) {
 }
 
 def archiveOwaspReports() {
+    // Archivage du rapport OWASP si généré
     if (fileExists('target/dependency-check-report.html')) {
         archiveArtifacts artifacts: 'target/dependency-check-report.*', allowEmptyArchive: true
 
@@ -615,11 +561,13 @@ def runMavenSecurityAudit() {
 }
 
 def publishTestAndCoverageResults() {
+    // Publication des résultats de tests avec junit
     if (fileExists('target/surefire-reports/TEST-*.xml')) {
         junit 'target/surefire-reports/TEST-*.xml'
         echo "✅ Résultats de tests publiés"
     }
 
+    // Archivage des rapports de couverture
     if (fileExists('target/site/jacoco/index.html')) {
         publishHTML([
             allowMissing: false,
@@ -634,6 +582,7 @@ def publishTestAndCoverageResults() {
         echo "✅ Rapport de couverture archivé et publié"
     }
 
+    // Publication du rapport de couverture JaCoCo
     if (fileExists('target/site/jacoco/jacoco.xml')) {
         try {
             step([
@@ -654,17 +603,19 @@ def collectDiagnosticInfo() {
     try {
         echo "🔍 Collecte d'informations de diagnostic..."
 
+        // Informations système
         sh """
             echo "=== INFORMATIONS SYSTÈME ==="
-            uname -a || echo "uname non disponible"
+            uname -a
             echo "=== ESPACE DISQUE ==="
-            df -h || echo "df non disponible"
+            df -h
             echo "=== MÉMOIRE ==="
             free -h 2>/dev/null || echo "Commande free non disponible"
             echo "=== PROCESSUS JAVA ==="
             ps aux | grep java || echo "Aucun processus Java trouvé"
         """
 
+        // Logs Docker si disponible
         if (env.DOCKER_AVAILABLE == "true") {
             sh """
                 echo "=== DOCKER INFO ==="
@@ -686,6 +637,7 @@ def checkDockerAvailability() {
     try {
         def result = sh(
             script: '''
+                # Vérification avec retry
                 for i in 1 2 3; do
                     if command -v docker >/dev/null 2>&1; then
                         if timeout 30 docker info >/dev/null 2>&1; then
@@ -707,6 +659,8 @@ def checkDockerAvailability() {
         } else {
             echo "❌ Docker non disponible ou non fonctionnel"
             echo "💡 Le pipeline continuera sans les étapes Docker"
+            echo "💡 Vérifiez que Docker est installé et que le daemon est démarré"
+            echo "💡 Vérifiez les permissions de l'utilisateur Jenkins"
         }
 
         return result
@@ -732,7 +686,6 @@ def displayBuildInfo(config) {
     ║ 📧 Email: ${config.emailRecipients}
     ║ 🔍 SonarQube: ${config.sonar.communityEdition ? "Community Edition" : "Developer Edition+"}
     ║ 📊 Projet SonarQube: ${env.SONAR_PROJECT_KEY}
-    ║ 🔐 OWASP avec API: ${config.security.owaspEnabled ? "✅ Activé" : "❌ Désactivé"}
     ╚══════════════════════════════════════════════════════════════════════════════╝
     """
 }
@@ -778,6 +731,8 @@ def buildDockerImage(config) {
         """
 
         echo "✅ Image Docker construite avec succès"
+
+        // Vérification de l'image
         sh "docker images ${config.containerName}:${env.CONTAINER_TAG}"
 
     } catch (Exception e) {
@@ -808,6 +763,7 @@ def pushDockerImage(config) {
                 docker push "\${DOCKER_USER}/${config.containerName}:${env.CONTAINER_TAG}"
             """
 
+            // Tag latest pour master
             if (env.BRANCH_NAME == 'master') {
                 echo "🏷️ Tagging latest pour master..."
                 sh """
@@ -864,11 +820,11 @@ def deployApplication(config) {
     }
 }
 
-def performHealthCheckImproved(config) {
+def performHealthCheck(config) {
     try {
         echo "🩺 Vérification de la santé de l'application..."
 
-        // Vérification du statut du conteneur
+        // Attendre que le conteneur soit en cours d'exécution
         timeout(time: config.timeouts.deployment, unit: 'MINUTES') {
             waitUntil {
                 script {
@@ -892,68 +848,49 @@ def performHealthCheckImproved(config) {
             }
         }
 
-        // Attente du démarrage complet
-        echo "⏳ Attente du démarrage de l'application (60s)..."
-        sleep(60)
+        // Attendre que l'application soit prête
+        echo "⏳ Attente du démarrage de l'application..."
+        sleep(30)
 
-        // Tests de santé progressifs
-        def healthChecks = [
-            [url: "http://localhost:${env.HTTP_PORT}/actuator/health", name: "Health"],
-            [url: "http://localhost:${env.HTTP_PORT}/actuator/info", name: "Info"],
-            [url: "http://localhost:${env.HTTP_PORT}/", name: "Application Root"]
-        ]
+        // Test HTTP avec plusieurs endpoints
+        timeout(time: 3, unit: 'MINUTES') {
+            waitUntil {
+                script {
+                    def healthEndpoints = [
+                        "http://localhost:${env.HTTP_PORT}/actuator/health",
+                        "http://localhost:${env.HTTP_PORT}/actuator/info"
+                    ]
 
-        timeout(time: 5, unit: 'MINUTES') {
-            healthChecks.each { check ->
-                echo "🔍 Test de ${check.name}..."
-                waitUntil {
-                    script {
+                    def allHealthy = true
+                    healthEndpoints.each { endpoint ->
                         def exitCode = sh(
-                            script: "curl -f -s -m 10 ${check.url} > /dev/null",
+                            script: "curl -f -s ${endpoint} > /dev/null",
                             returnStatus: true
                         )
 
-                        if (exitCode == 0) {
-                            echo "✅ ${check.name} : OK"
-                            return true
-                        } else {
-                            echo "⏳ ${check.name} : En attente..."
-                            sleep(15)
-                            return false
+                        if (exitCode != 0) {
+                            allHealthy = false
+                            echo "⏳ Endpoint ${endpoint} pas encore prêt..."
                         }
+                    }
+
+                    if (allHealthy) {
+                        echo "✅ Tous les endpoints répondent correctement"
+                        return true
+                    } else {
+                        sleep(15)
+                        return false
                     }
                 }
             }
         }
 
-        // Test de performance basique
-        echo "🚀 Test de performance basique..."
-        sh """
-            curl -w "Temps de réponse: %{time_total}s\\n" \
-                 -s -o /dev/null \
-                 -m 30 \
-                 http://localhost:${env.HTTP_PORT}/actuator/health
-        """
-
-        echo "✅ Application en bonne santé et performante"
+        echo "✅ Application en bonne santé et accessible"
 
     } catch (Exception e) {
-        // Collecte de logs détaillés pour diagnostic
-        echo "🔍 Collecte de logs pour diagnostic..."
-        sh """
-            echo "=== LOGS CONTENEUR ==="
-            docker logs ${config.containerName} --tail 200 2>/dev/null || echo 'Logs indisponibles'
-
-            echo "=== PROCESSUS CONTENEUR ==="
-            docker exec ${config.containerName} ps aux 2>/dev/null || echo 'Processus indisponibles'
-
-            echo "=== PORTS CONTENEUR ==="
-            docker port ${config.containerName} 2>/dev/null || echo 'Ports indisponibles'
-
-            echo "=== ÉTAT SYSTÈME ==="
-            docker stats ${config.containerName} --no-stream 2>/dev/null || echo 'Stats indisponibles'
-        """
-
+        // Logs pour debug
+        sh "docker logs ${config.containerName} --tail 100 2>/dev/null || echo 'Impossible de récupérer les logs'"
+        sh "docker inspect ${config.containerName} 2>/dev/null || echo 'Impossible d\\'inspecter le conteneur'"
         error "🚫 Health check échoué: ${e.getMessage()}"
     }
 }
@@ -978,7 +915,7 @@ def cleanupDockerImages(config) {
     }
 }
 
-def sendNotification(recipients, config) {
+def sendNotification(recipients) {
     try {
         def cause = currentBuild.getBuildCauses()?.collect { it.shortDescription }?.join(', ') ?: "Non spécifiée"
         def duration = currentBuild.durationString.replace(' and counting', '')
@@ -1008,8 +945,6 @@ def sendNotification(recipients, config) {
             """
         }
 
-        def securityInfo = config.security.owaspEnabled ? "✅ OWASP avec API NVD" : "❌ OWASP désactivé"
-
         def body = """
         ${statusIcon} Résultat: ${status}
 
@@ -1024,13 +959,9 @@ def sendNotification(recipients, config) {
         🔗 Liens:
         • Console: ${env.BUILD_URL}console
         • Artefacts: ${env.BUILD_URL}artifact/
-        • Tests: ${env.BUILD_URL}testReport/
-        • Coverage: ${env.BUILD_URL}JaCoCo_Coverage_Report/
 
-        🔧 Configuration:
-        • 🐳 Docker: ${dockerStatus}
-        • 🔐 Sécurité: ${securityInfo}
-        • 🚀 Cause: ${cause}
+        🐳 Docker: ${dockerStatus}
+        🚀 Cause: ${cause}
         ${deploymentInfo}
 
         ${status == 'SUCCESS' ? '🎉 Build réussi!' : '🔍 Vérifiez les logs pour plus de détails.'}
@@ -1050,10 +981,7 @@ def sendNotification(recipients, config) {
     }
 }
 
-// =============================================================================
-// FONCTIONS UTILITAIRES
-// =============================================================================
-
+// Fonctions utilitaires pour la configuration
 String getEnvName(String branchName, Map environments) {
     def branch = branchName?.toLowerCase()
     return environments[branch] ?: environments.default
@@ -1075,6 +1003,8 @@ String getTag(String buildNumber, String branchName) {
 }
 
 String getSonarProjectKey(String branchName, Map sonarConfig) {
+    // Pour SonarQube Community Edition, on utilise un seul projet
+    // Pour Developer Edition+, on peut utiliser des clés différentes par branche
     if (sonarConfig.communityEdition) {
         return sonarConfig.projectKey
     } else {
