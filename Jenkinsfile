@@ -7,9 +7,10 @@ def config = [
     sonarProjectKey: "paymybuddy",
     // Configuration SonarQube
     sonar: [
-        communityEdition: true,
+        // Détection automatique de l'édition SonarQube
+        communityEdition: true, // Changez à false si vous avez Developer Edition+
         projectKey: "paymybuddy",
-        qualityProfileJava: "Sonar way",
+        qualityProfileJava: "Sonar way", // Profile de qualité par défaut
         exclusions: [
             "**/target/**",
             "**/*.min.js",
@@ -21,7 +22,7 @@ def config = [
         qualityGate: 2,
         deployment: 5,
         sonarAnalysis: 10,
-        owaspCheck: 20
+        owaspCheck: 20  // Nouveau timeout pour OWASP
     ],
     ports: [
         master: '9003',
@@ -63,8 +64,8 @@ pipeline {
         // Variables SonarQube
         SONAR_PROJECT_KEY = "${getSonarProjectKey(env.BRANCH_NAME, config.sonar)}"
         MAVEN_OPTS = "-Dmaven.repo.local=${WORKSPACE}/.m2/repository -Xmx1024m"
-        // ✅ Configuration NVD API optionnelle
-        NVD_API_AVAILABLE = "${checkNvdApiKeyExists()}"
+        // Configuration pour OWASP Dependency Check
+        NVD_API_KEY = credentials('nvd-api-key') // Optionnel mais recommandé
     }
 
     stages {
@@ -228,6 +229,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible ET l'image construite
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -247,6 +249,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -266,6 +269,7 @@ pipeline {
                         branch 'master'
                         branch 'develop'
                     }
+                    // Docker doit être disponible
                     expression {
                         return env.DOCKER_AVAILABLE == "true"
                     }
@@ -282,21 +286,26 @@ pipeline {
     post {
         always {
             script {
-                // ✅ Archivage des artefacts avec vérification
-                safeArchiveArtifacts()
+                // Archivage des artefacts (même sans Docker)
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, allowEmptyArchive: true
 
-                // ✅ Nettoyage sécurisé
-                safeCleanup(config)
+                // Nettoyage des images Docker locales (seulement si Docker disponible)
+                if (env.DOCKER_AVAILABLE == "true") {
+                    cleanupDockerImages(config)
+                }
 
-                // ✅ Notification sécurisée
-                safeNotification(config.emailRecipients)
+                // Nettoyage du workspace
+                cleanWs()
+
+                // Envoi de notification
+                sendNotification(config.emailRecipients)
             }
         }
         failure {
             script {
                 echo "❌ Pipeline échoué - Vérifiez les logs ci-dessus"
-                // ✅ Collecte de diagnostic sécurisée
-                safeCollectDiagnostic()
+                // Collecte d'informations de diagnostic
+                collectDiagnosticInfo()
             }
         }
         success {
@@ -317,91 +326,8 @@ pipeline {
 }
 
 // =============================================================================
-// FONCTIONS UTILITAIRES SÉCURISÉES
+// FONCTIONS UTILITAIRES AMÉLIORÉES
 // =============================================================================
-
-// ✅ Vérification sécurisée de l'existence de la clé NVD API
-def checkNvdApiKeyExists() {
-    try {
-        // Tentative de récupération du credential sans l'assigner
-        withCredentials([string(credentialsId: 'nvd-api-key', variable: 'DUMMY_VAR')]) {
-            return "true"
-        }
-    } catch (Exception e) {
-        echo "ℹ️ Clé API NVD non configurée - Fonctionnement en mode standard"
-        return "false"
-    }
-}
-
-// ✅ Archivage sécurisé des artefacts
-def safeArchiveArtifacts() {
-    try {
-        if (fileExists('target') && findFiles(glob: 'target/*.jar').length > 0) {
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, allowEmptyArchive: true
-            echo "✅ Artefacts archivés avec succès"
-        } else {
-            echo "ℹ️ Aucun artefact à archiver"
-        }
-    } catch (Exception e) {
-        echo "⚠️ Impossible d'archiver les artefacts: ${e.getMessage()}"
-    }
-}
-
-// ✅ Nettoyage sécurisé
-def safeCleanup(config) {
-    try {
-        // Nettoyage Docker seulement si disponible
-        if (env.DOCKER_AVAILABLE == "true") {
-            cleanupDockerImages(config)
-        }
-
-        // Nettoyage du workspace
-        cleanWs()
-        echo "✅ Nettoyage terminé"
-
-    } catch (Exception e) {
-        echo "⚠️ Erreur lors du nettoyage: ${e.getMessage()}"
-    }
-}
-
-// ✅ Notification sécurisée
-def safeNotification(recipients) {
-    try {
-        sendNotification(recipients)
-    } catch (Exception e) {
-        echo "⚠️ Échec de l'envoi de notification: ${e.getMessage()}"
-    }
-}
-
-// ✅ Collecte de diagnostic sécurisée
-def safeCollectDiagnostic() {
-    try {
-        echo "🔍 Collecte d'informations de diagnostic..."
-
-        // Informations système de base (sans sh)
-        echo "=== INFORMATIONS BUILD ==="
-        echo "Build Number: ${env.BUILD_NUMBER}"
-        echo "Branch: ${env.BRANCH_NAME}"
-        echo "Workspace: ${env.WORKSPACE}"
-        echo "Docker Available: ${env.DOCKER_AVAILABLE}"
-        echo "NVD API Available: ${env.NVD_API_AVAILABLE}"
-
-        // Tentative de collecte système avec gestion d'erreur
-        try {
-            sh """
-                echo "=== ESPACE DISQUE ==="
-                df -h . || echo "Impossible de vérifier l'espace disque"
-                echo "=== PROCESSUS JAVA ==="
-                ps aux | grep java | head -5 || echo "Aucun processus Java trouvé"
-            """
-        } catch (Exception sysError) {
-            echo "⚠️ Informations système non disponibles: ${sysError.getMessage()}"
-        }
-
-    } catch (Exception e) {
-        echo "⚠️ Erreur lors de la collecte de diagnostic: ${e.getMessage()}"
-    }
-}
 
 def validateEnvironment() {
     echo "🔍 Validation de l'environnement..."
@@ -418,13 +344,9 @@ def validateEnvironment() {
     }
 
     // Vérification de l'espace disque
-    try {
-        sh """
-            df -h . | tail -1 | awk '{print "💾 Espace disque disponible: " \$4 " (" \$5 " utilisé)"}'
-        """
-    } catch (Exception e) {
-        echo "⚠️ Impossible de vérifier l'espace disque: ${e.getMessage()}"
-    }
+    sh """
+        df -h . | tail -1 | awk '{print "💾 Espace disque disponible: " \$4 " (" \$5 " utilisé)"}'
+    """
 }
 
 def performSonarAnalysis(config) {
@@ -433,7 +355,9 @@ def performSonarAnalysis(config) {
     withSonarQubeEnv('SonarQube') {
         withCredentials([string(credentialsId: 'sonartoken', variable: 'SONAR_TOKEN')]) {
             try {
+                // Construction de la commande SonarQube adaptée à l'édition
                 def sonarCommand = buildSonarCommand(config)
+
                 echo "📋 Commande SonarQube: ${sonarCommand}"
 
                 timeout(time: config.timeouts.sonarAnalysis, unit: 'MINUTES') {
@@ -445,6 +369,7 @@ def performSonarAnalysis(config) {
             } catch (Exception e) {
                 echo "❌ Erreur lors de l'analyse SonarQube: ${e.getMessage()}"
 
+                // Si l'erreur concerne les branches, on continue avec une analyse simple
                 if (e.getMessage().contains("sonar.branch.name")) {
                     echo "⚠️ Fonctionnalité multi-branches non supportée, analyse simple en cours..."
                     def fallbackCommand = buildFallbackSonarCommand(config)
@@ -472,8 +397,11 @@ def buildSonarCommand(config) {
             -B -q
     """
 
+    // Ajout des paramètres spécifiques selon l'édition
     if (!config.sonar.communityEdition && env.BRANCH_NAME) {
         baseCommand += " -Dsonar.branch.name=${env.BRANCH_NAME}"
+
+        // Paramètres additionnels pour Developer Edition+
         if (env.BRANCH_NAME != 'master') {
             baseCommand += " -Dsonar.branch.target=master"
         }
@@ -507,6 +435,7 @@ def checkQualityGate(config) {
             if (qg.status != 'OK') {
                 echo "❌ Quality Gate: ${qg.status}"
 
+                // Affichage des détails si disponibles
                 if (qg.conditions) {
                     echo "📊 Détails des conditions:"
                     qg.conditions.each { condition ->
@@ -514,6 +443,7 @@ def checkQualityGate(config) {
                     }
                 }
 
+                // En fonction de la branche, on peut être plus ou moins strict
                 if (env.BRANCH_NAME == 'master') {
                     error "🚫 Quality Gate échoué sur la branche master - Arrêt du pipeline"
                 } else {
@@ -535,64 +465,57 @@ def checkQualityGate(config) {
     }
 }
 
-// ✅ FONCTION OWASP CORRIGÉE SANS DÉPENDANCE AU CREDENTIAL
+// ✅ FONCTION CORRIGÉE POUR OWASP DEPENDENCY CHECK
 def runDependencyCheckFixed() {
     try {
         echo "🔒 Vérification des dépendances (OWASP)..."
 
-        // Étape 1: Mise à jour de la base de données avec gestion conditionnelle de l'API Key
+        // Étape 1: Initialiser/mettre à jour la base de données OWASP
         echo "📥 Initialisation de la base de données NVD..."
-
-        def updateCommand = """
-            mvn org.owasp:dependency-check-maven:update-only \
-                -DautoUpdate=true \
-                -DcveValidForHours=24 \
-                -B -q
-        """
-
-        // Ajout conditionnel de la clé API
-        if (env.NVD_API_AVAILABLE == "true") {
-            echo "🔑 Utilisation de la clé API NVD"
-            withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                updateCommand += " -DnvdApiKey=\${NVD_API_KEY}"
-                timeout(time: 10, unit: 'MINUTES') {
-                    sh updateCommand
-                }
-            }
-        } else {
-            echo "⚠️ Pas de clé API NVD - Utilisation du mode standard"
+        try {
             timeout(time: 15, unit: 'MINUTES') {
-                sh updateCommand
+                def nvdUpdateCommand = """
+                    mvn org.owasp:dependency-check-maven:update-only \
+                        -DautoUpdate=true \
+                        -DcveValidForHours=24 \
+                        -B -q
+                """
+
+                // Ajout de la clé API NVD si disponible
+                if (env.NVD_API_KEY) {
+                    nvdUpdateCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
+                }
+
+                sh nvdUpdateCommand
+                echo "✅ Base de données NVD mise à jour"
             }
+        } catch (Exception updateError) {
+            echo "⚠️ Échec de la mise à jour de la base NVD: ${updateError.getMessage()}"
+            echo "🔄 Tentative avec une base locale..."
         }
 
-        echo "✅ Base de données NVD mise à jour"
-
-        // Étape 2: Analyse des vulnérabilités
+        // Étape 2: Exécuter l'analyse des dépendances
         echo "🔍 Analyse des vulnérabilités..."
-
-        def checkCommand = """
-            mvn org.owasp:dependency-check-maven:check \
-                -DfailBuildOnCVSS=8 \
-                -DskipProvidedScope=true \
-                -DskipRuntimeScope=false \
-                -DsuppressFailureOnError=true \
-                -DautoUpdate=false \
-                -DcveValidForHours=24 \
-                -DretireJsAnalyzerEnabled=false \
-                -DnodeAnalyzerEnabled=false \
-                -B -q
-        """
-
         timeout(time: config.timeouts.owaspCheck, unit: 'MINUTES') {
-            if (env.NVD_API_AVAILABLE == "true") {
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
-                    checkCommand += " -DnvdApiKey=\${NVD_API_KEY}"
-                    sh checkCommand
-                }
-            } else {
-                sh checkCommand
+            def checkCommand = """
+                mvn org.owasp:dependency-check-maven:check \
+                    -DfailBuildOnCVSS=8 \
+                    -DskipProvidedScope=true \
+                    -DskipRuntimeScope=false \
+                    -DsuppressFailureOnError=true \
+                    -DautoUpdate=false \
+                    -DcveValidForHours=24 \
+                    -DretireJsAnalyzerEnabled=false \
+                    -DnodeAnalyzerEnabled=false \
+                    -B -q
+            """
+
+            // Ajout de la clé API NVD si disponible
+            if (env.NVD_API_KEY) {
+                checkCommand += " -DnvdApiKey=${env.NVD_API_KEY}"
             }
+
+            sh checkCommand
         }
 
         echo "✅ Vérification des dépendances terminée avec succès"
@@ -600,15 +523,16 @@ def runDependencyCheckFixed() {
     } catch (Exception e) {
         def errorMessage = e.getMessage()
 
-        if (errorMessage.contains("NoDataException") || errorMessage.contains("database does not exist")) {
+        if (errorMessage.contains("NoDataException")) {
             echo "❌ Base de données OWASP non disponible"
-            echo "💡 Solutions:"
-            echo "   1. Configurer une clé API NVD (https://nvd.nist.gov/developers/request-an-api-key)"
-            echo "   2. Ou attendre que la base se synchronise automatiquement"
+            echo "💡 Solutions possibles:"
+            echo "   1. Configurer une clé API NVD (recommandé)"
+            echo "   2. Permettre l'auto-update de la base"
+            echo "   3. Initialiser manuellement la base de données"
 
-            // Mode fallback simplifié
+            // Alternative: essayer avec un mode dégradé
             try {
-                echo "🔄 Tentative en mode fallback..."
+                echo "🔄 Tentative en mode dégradé sans base NVD..."
                 sh """
                     mvn org.owasp:dependency-check-maven:check \
                         -DskipProvidedScope=true \
@@ -623,35 +547,35 @@ def runDependencyCheckFixed() {
                 """
                 echo "⚠️ Analyse OWASP terminée en mode dégradé"
             } catch (Exception fallbackError) {
-                echo "❌ OWASP Dependency Check non disponible"
+                echo "❌ Impossible d'exécuter OWASP Dependency Check même en mode dégradé"
+                currentBuild.result = 'UNSTABLE'
             }
+        } else if (errorMessage.contains("timeout") || errorMessage.contains("Timeout")) {
+            echo "⏰ OWASP Dependency Check interrompu pour timeout - Continuons le pipeline"
+            currentBuild.result = 'UNSTABLE'
         } else {
             echo "⚠️ Problème avec OWASP Dependency Check: ${errorMessage}"
+            currentBuild.result = 'UNSTABLE'
         }
-
-        currentBuild.result = 'UNSTABLE'
     }
 }
 
 def archiveOwaspReports() {
-    try {
-        if (fileExists('target/dependency-check-report.html')) {
-            archiveArtifacts artifacts: 'target/dependency-check-report.*', allowEmptyArchive: true
+    // Archivage du rapport OWASP si généré
+    if (fileExists('target/dependency-check-report.html')) {
+        archiveArtifacts artifacts: 'target/dependency-check-report.*', allowEmptyArchive: true
 
-            publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'target',
-                reportFiles: 'dependency-check-report.html',
-                reportName: 'OWASP Dependency Check Report'
-            ])
-            echo "✅ Rapport OWASP archivé et publié"
-        } else {
-            echo "ℹ️ Aucun rapport OWASP généré"
-        }
-    } catch (Exception e) {
-        echo "⚠️ Erreur lors de l'archivage OWASP: ${e.getMessage()}"
+        publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: 'target',
+            reportFiles: 'dependency-check-report.html',
+            reportName: 'OWASP Dependency Check Report'
+        ])
+        echo "✅ Rapport OWASP archivé et publié"
+    } else {
+        echo "⚠️ Aucun rapport OWASP généré"
     }
 }
 
@@ -678,11 +602,15 @@ def runMavenSecurityAudit() {
 
     } catch (Exception e) {
         echo "⚠️ Audit Maven échoué: ${e.getMessage()}"
+
+        if (e.getMessage().contains("timeout") || e.getMessage().contains("Timeout")) {
+            echo "⏰ Audit Maven interrompu pour timeout - Continuons le pipeline"
+        }
     }
 }
 
 def publishTestAndCoverageResults() {
-    // Publication des résultats de tests
+    // Publication des résultats de tests avec junit
     if (fileExists('target/surefire-reports/TEST-*.xml')) {
         junit 'target/surefire-reports/TEST-*.xml'
         echo "✅ Résultats de tests publiés"
@@ -703,7 +631,7 @@ def publishTestAndCoverageResults() {
         echo "✅ Rapport de couverture archivé et publié"
     }
 
-    // Publication JaCoCo
+    // Publication du rapport de couverture JaCoCo
     if (fileExists('target/site/jacoco/jacoco.xml')) {
         try {
             step([
@@ -720,10 +648,45 @@ def publishTestAndCoverageResults() {
     }
 }
 
+def collectDiagnosticInfo() {
+    try {
+        echo "🔍 Collecte d'informations de diagnostic..."
+
+        // Informations système
+        sh """
+            echo "=== INFORMATIONS SYSTÈME ==="
+            uname -a
+            echo "=== ESPACE DISQUE ==="
+            df -h
+            echo "=== MÉMOIRE ==="
+            free -h 2>/dev/null || echo "Commande free non disponible"
+            echo "=== PROCESSUS JAVA ==="
+            ps aux | grep java || echo "Aucun processus Java trouvé"
+        """
+
+        // Logs Docker si disponible
+        if (env.DOCKER_AVAILABLE == "true") {
+            sh """
+                echo "=== DOCKER INFO ==="
+                docker info 2>/dev/null || echo "Docker info non disponible"
+                echo "=== CONTENEURS ACTIFS ==="
+                docker ps -a 2>/dev/null || echo "Impossible de lister les conteneurs"
+            """
+        } else {
+            echo "=== DOCKER STATUS ==="
+            echo "Docker n'est pas disponible sur ce système"
+        }
+
+    } catch (Exception e) {
+        echo "⚠️ Erreur lors de la collecte de diagnostic: ${e.getMessage()}"
+    }
+}
+
 def checkDockerAvailability() {
     try {
         def result = sh(
             script: '''
+                # Vérification avec retry
                 for i in 1 2 3; do
                     if command -v docker >/dev/null 2>&1; then
                         if timeout 30 docker info >/dev/null 2>&1; then
@@ -743,7 +706,10 @@ def checkDockerAvailability() {
             echo "✅ Docker disponible et fonctionnel"
             sh 'docker --version || echo "Version Docker indisponible"'
         } else {
-            echo "❌ Docker non disponible - Pipeline continuera sans Docker"
+            echo "❌ Docker non disponible ou non fonctionnel"
+            echo "💡 Le pipeline continuera sans les étapes Docker"
+            echo "💡 Vérifiez que Docker est installé et que le daemon est démarré"
+            echo "💡 Vérifiez les permissions de l'utilisateur Jenkins"
         }
 
         return result
@@ -760,10 +726,9 @@ def displayBuildInfo(config) {
     ╠══════════════════════════════════════════════════════════════════════════════╣
     ║ 🏗️  Build #: ${env.BUILD_NUMBER}
     ║ 🌿 Branch: ${env.BRANCH_NAME}
-    ║ ☕ Java: ${env.JAVA_HOME ?: 'N/A'}
-    ║ 📦 Maven: ${env.MAVEN_HOME ?: 'N/A'}
+    ║ ☕ Java: ${env.JAVA_HOME}
+    ║ 📦 Maven: ${env.MAVEN_HOME}
     ║ 🐳 Docker: ${env.DOCKER_AVAILABLE == "true" ? "✅ Disponible" : "❌ Indisponible"}
-    ║ 🔑 NVD API: ${env.NVD_API_AVAILABLE == "true" ? "✅ Configurée" : "❌ Non configurée"}
     ║ 🌍 Environnement: ${env.ENV_NAME}
     ║ 🚪 Port: ${env.HTTP_PORT}
     ║ 🏷️  Tag: ${env.CONTAINER_TAG}
@@ -815,6 +780,8 @@ def buildDockerImage(config) {
         """
 
         echo "✅ Image Docker construite avec succès"
+
+        // Vérification de l'image
         sh "docker images ${config.containerName}:${env.CONTAINER_TAG}"
 
     } catch (Exception e) {
@@ -1013,7 +980,6 @@ def sendNotification(recipients) {
         def subject = "${statusIcon} [Jenkins] ${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${status}"
 
         def dockerStatus = env.DOCKER_AVAILABLE == "true" ? "✅ Disponible" : "❌ Indisponible"
-        def nvdApiStatus = env.NVD_API_AVAILABLE == "true" ? "✅ Configurée" : "❌ Non configurée"
         def deploymentInfo = ""
 
         if (env.DOCKER_AVAILABLE == "true" && status == 'SUCCESS') {
@@ -1043,10 +1009,8 @@ def sendNotification(recipients) {
         • Console: ${env.BUILD_URL}console
         • Artefacts: ${env.BUILD_URL}artifact/
 
-        🔧 Configuration:
-        • 🐳 Docker: ${dockerStatus}
-        • 🔑 NVD API: ${nvdApiStatus}
-        • 🚀 Cause: ${cause}
+        🐳 Docker: ${dockerStatus}
+        🚀 Cause: ${cause}
         ${deploymentInfo}
 
         ${status == 'SUCCESS' ? '🎉 Build réussi!' : '🔍 Vérifiez les logs pour plus de détails.'}
