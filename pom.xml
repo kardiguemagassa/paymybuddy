@@ -302,11 +302,17 @@
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>9.0.7</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<phase>verify</phase>
+					</execution>
+				</executions>
 				<configuration>
 					<failBuildOnCVSS>8</failBuildOnCVSS>
-					<autoUpdate>true</autoUpdate>
-					<retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
-					<nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+					<!-- Pas besoin de mettre la clé ici si tu la passes par Jenkins -->
 				</configuration>
 			</plugin>
 
